@@ -1,6 +1,6 @@
 Language : [🇺🇸](./README.md) | [🇨🇳](./README.zh-CN.md) | [🇷🇺](./README.ru-RU.md) | 🇹🇷 | [🇯🇵](./README.ja-JP.md) | [🇫🇷](./README.fr-FR.md) | [🇵🇹](./README.pt-BR.md) | [🇸🇦](./README.ar-DZ.md)
 
-<h1 align="center">Ant Design Pro</h1>
+<h1 align="center">Quản lý Bộ tiêu chí chất lượng bệnh viện</h1>
 
 <div align="center">
 
@@ -20,7 +20,7 @@ React ile kurumsal uygulamalar için taslak olarak geliştirilmiş kullanıma ha
 
 ## 5.0 Versiyonu Şimdi Yayında! 🎉🎉🎉
 
-[Ant Design Pro 5.0.0](https://github.com/ant-design/ant-design-pro/issues/8656)
+[Quản lý Bộ tiêu chí chất lượng bệnh viện 5.0.0](https://github.com/ant-design/ant-design-pro/issues/8656)
 
 ## Çeviri Desteği :loudspeaker:
 
@@ -94,7 +94,7 @@ $ yarn create umi  # or npm create umi
 
 $ git init
 $ npm install
-$ npm start         # visit http://localhost:8000
+$ npm start         # visit http://localhost:3005
 ```
 
 ## Tarayıcı desteği
@@ -109,6 +109,6 @@ Modern internet tarayıcıları .
 
 Her türlü desteğinize açığız, bu projeye nasıl katkıda bulunabileceğinize dair bazı örnekler:
 
-- Günlük işinizde Ant Design Pro kullanın.
+- Günlük işinizde Quản lý Bộ tiêu chí chất lượng bệnh viện kullanın.
 - Hataları bildirmek veya soru sormak için [issues](http://github.com/ant-design/ant-design-pro/issues) gönderin.
 - Kodumuzu geliştirmek için [pull requests](http://github.com/ant-design/ant-design-pro/pulls) gönderin.

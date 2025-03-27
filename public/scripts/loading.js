@@ -191,10 +191,10 @@
           </div>
         </div>
         <div class="loading-title">
-          正在加载资源
+          Đang tải dữ liệu
         </div>
         <div class="loading-sub-title">
-          初次加载资源可能需要较多时间 请耐心等待
+          Đầu tiên có thể mất nhiều thời gian hơn, vui lòng chờ đợi
         </div>
       </div>
     `;

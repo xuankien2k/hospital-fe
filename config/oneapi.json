@@ -1,15 +1,15 @@
 {
   "openapi": "3.0.1",
   "info": {
-    "title": "Ant Design Pro",
+    "title": "Quản lý Bộ tiêu chí chất lượng bệnh viện",
     "version": "1.0.0"
   },
   "servers": [
     {
-      "url": "http://localhost:8000/"
+      "url": "http://localhost:3005/"
     },
     {
-      "url": "https://localhost:8000/"
+      "url": "https://localhost:3005/"
     }
   ],
   "paths": {

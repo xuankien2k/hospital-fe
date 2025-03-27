@@ -23,10 +23,22 @@ export default [
     ],
   },
   {
-    path: '/welcome',
-    name: 'welcome',
-    icon: 'smile',
-    component: './Welcome',
+    path: '/user-list',
+    name: 'Danh sách người dùng',
+    icon: 'user',
+    component: './User/Users',
+  },
+  {
+    path: '/Category',
+    name: 'Quản lý tiêu chí',
+    icon: 'Solution',
+    component: './Category/Categories',
+  },
+  {
+    path: '/Report',
+    name: 'Báo cáo',
+    icon: 'dashboard',
+    component: './Report/Report',
   },
   {
     path: '/admin',
@@ -46,14 +58,8 @@ export default [
     ],
   },
   {
-    name: 'list.table-list',
-    icon: 'table',
-    path: '/list',
-    component: './TableList',
-  },
-  {
     path: '/',
-    redirect: '/welcome',
+    redirect: '/Category',
   },
   {
     path: '*',

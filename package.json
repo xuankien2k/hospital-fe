@@ -40,9 +40,11 @@
   ],
   "dependencies": {
     "@ant-design/icons": "^4.8.3",
+    "@ant-design/plots": "^2.3.3",
     "@ant-design/pro-components": "^2.7.19",
     "antd": "^5.21.2",
     "antd-style": "^3.7.0",
+    "axios": "^1.8.4",
     "classnames": "^2.5.1",
     "dayjs": "^1.11.13",
     "querystring": "^0.2.1",

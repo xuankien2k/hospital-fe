@@ -1,6 +1,6 @@
 {
-  "name": "Ant Design Pro",
-  "short_name": "Ant Design Pro",
+  "name": "Quản lý Bộ tiêu chí chất lượng bệnh viện",
+  "short_name": "Quản lý Bộ tiêu chí chất lượng bệnh viện",
   "display": "standalone",
   "start_url": "./?utm_source=homescreen",
   "theme_color": "#002140",

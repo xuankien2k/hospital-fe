@@ -1,6 +1,6 @@
 ---
 name: '功能需求 | Feature Requirements ✨'
-about: 对 Ant Design Pro  的需求或建议
+about: 对 Quản lý Bộ tiêu chí chất lượng bệnh viện  的需求或建议
 title: '👑 [需求 | Feature]'
 labels: '👑 Feature Request'
 assignees: ''

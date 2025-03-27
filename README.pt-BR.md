@@ -1,6 +1,6 @@
 Language : [🇺🇸](./README.md) | [🇨🇳](./README.zh-CN.md) | [🇷🇺](./README.ru-RU.md) | [🇹🇷](./README.tr-TR.md) | [🇯🇵](./README.ja-JP.md) | [🇫🇷](./README.fr-FR.md) | 🇵🇹 | [🇸🇦](./README.ar-DZ.md)
 
-<h1 align="center">Ant Design Pro</h1>
+<h1 align="center">Quản lý Bộ tiêu chí chất lượng bệnh viện</h1>
 
 <div align="center">
 
@@ -20,7 +20,7 @@ Uma solução de UI pronta para aplicações corporativos na forma de um boilerp
 
 ## 4.0 Lançado! 🎉🎉🎉
 
-[Anúncio do Ant Design Pro 4.0.0](https://medium.com/ant-design/ant-design-pro-v4-is-here-6f23098ae9d9)
+[Anúncio do Quản lý Bộ tiêu chí chất lượng bệnh viện 4.0.0](https://medium.com/ant-design/ant-design-pro-v4-is-here-6f23098ae9d9)
 
 ## Recrutamento para tradução :loudspeaker:
 
@@ -94,7 +94,7 @@ $ yarn create umi  # ou npm create umi
 
 $ git init
 $ npm install
-$ npm start         # visit http://localhost:8000
+$ npm start         # visit http://localhost:3005
 ```
 
 ## Suporte a navegadores
@@ -109,6 +109,6 @@ Navegadores modernos .
 
 Qualquer tipo de contribuição é bem-vinda, aqui estão alguns exemplos de como você pode contribuir com esse projeto:
 
-- Use Ant Design Pro no seu trabalho diário.
+- Use Quản lý Bộ tiêu chí chất lượng bệnh viện no seu trabalho diário.
 - Submeta [issues](http://github.com/ant-design/ant-design-pro/issues) para reportar bugs ou tirar dúvidas.
 - Proponha [pull requests](http://github.com/ant-design/ant-design-pro/pulls) para melhorar nosso código.

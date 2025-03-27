@@ -1,5 +1,5 @@
 import { outLogin } from '@/services/ant-design-pro/api';
-import { LogoutOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
+import { LogoutOutlined, SettingOutlined, UserOutlined, CrownOutlined } from '@ant-design/icons';
 import { history, useModel } from '@umijs/max';
 import { Spin } from 'antd';
 import type { MenuProps } from 'antd';
@@ -17,7 +17,15 @@ export type GlobalHeaderRightProps = {
 export const AvatarName = () => {
   const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
-  return <span className="anticon">{currentUser?.name}</span>;
+  return (
+    <span className="anticon">
+      {currentUser?.role === 'admin' && (
+        <CrownOutlined style={{ marginRight: 4, color: '#faad14' }} />
+      )}
+      {currentUser?.role === 'user' && <UserOutlined style={{ marginRight: 4 }} />}
+      {currentUser?.username}
+    </span>
+  );
 };
 
 const useStyles = createStyles(({ token }) => {
@@ -92,7 +100,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
 
   const { currentUser } = initialState;
 
-  if (!currentUser || !currentUser.name) {
+  if (!currentUser || !currentUser.username) {
     return loading;
   }
 
@@ -117,7 +125,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: '退出登录',
+      label: 'Đăng xuất',
     },
   ];
 

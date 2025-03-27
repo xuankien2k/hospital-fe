@@ -1,6 +1,6 @@
 Language : [🇺🇸](./README.md) | [🇨🇳](./README.zh-CN.md) | 🇷🇺 | [🇹🇷](./README.tr-TR.md) | [🇯🇵](./README.ja-JP.md) | [🇫🇷](./README.fr-FR.md) | [🇵🇹](./README.pt-BR.md) | [🇸🇦](./README.ar-DZ.md)
 
-<h1 align="center">Ant Design Pro</h1>
+<h1 align="center">Quản lý Bộ tiêu chí chất lượng bệnh viện</h1>
 
 <div align="center">
 
@@ -86,7 +86,7 @@ $ yarn create umi  # or npm create umi
 
 $ git init
 $ npm install
-$ npm start         # visit http://localhost:8000
+$ npm start         # visit http://localhost:3005
 ```
 
 Больше информации в [документации](http://pro.ant.design/docs/getting-started).
@@ -103,6 +103,6 @@ $ npm start         # visit http://localhost:8000
 
 Любые варианты распространения приветствуются! Вот несколько примеров того, как вы можете помочь распространению проекта:
 
-- Использовать Ant Design Pro в ежедневной работе.
+- Использовать Quản lý Bộ tiêu chí chất lượng bệnh viện в ежедневной работе.
 - Создавать [задачи](http://github.com/ant-design/ant-design-pro/issues) заводить баги или отвечать на вопросы.
 - Делать [pull-реквесты](http://github.com/ant-design/ant-design-pro/pulls) для совершенствования нашего кода.

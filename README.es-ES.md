@@ -1,6 +1,6 @@
 Idioma: 🇺🇸 | [🇨🇳](./README.zh-CN.md) | [🇷🇺](./README.ru-RU.md) | [🇹🇷](./README.tr-TR.md) | [🇯🇵](./README.ja-JP.md) | [🇫🇷](./README.fr-FR.md) | [🇵🇹](./README.pt-BR.md) | [🇸🇦](./README.ar-DZ.md) | [🇪🇸](./README.es-ES.md)
 
-<h1 align="center">Ant Design Pro</h1>
+<h1 align="center">Quản lý Bộ tiêu chí chất lượng bệnh viện</h1>
 
 <div align="center">
 
@@ -20,7 +20,7 @@ Una solución de IU listo para usar para aplicaciones empresariales como plantil
 
 ## ¡La versión 5.0 ya está disponible! 🎉🎉🎉
 
-[Ant Design Pro 5.0.0](https://github.com/ant-design/ant-design-pro/issues/8656)
+[Quản lý Bộ tiêu chí chất lượng bệnh viện 5.0.0](https://github.com/ant-design/ant-design-pro/issues/8656)
 
 ## Reclutamiento de traductores :loudspeaker:
 
@@ -126,6 +126,6 @@ Navegadores modernos.
 
 Cualquier tipo de contribución es bienvenida, aquí tienes algunos ejemplos de cómo puedes contribuir a este proyecto:
 
-- Utiliza Ant Design Pro en tu trabajo diario.
+- Utiliza Quản lý Bộ tiêu chí chất lượng bệnh viện en tu trabajo diario.
 - Envía [issues](http://github.com/ant-design/ant-design-pro/issues) para reportar errores o hacer preguntas.
 - Propón [pull requests](http://github.com/ant-design/ant-design-pro/pulls) para mejorar nuestro código.
