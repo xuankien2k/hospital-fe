@@ -56,10 +56,38 @@ const outOfDateFilter = [
   },
 ];
 
+const levelFilter = [
+  {
+    value: 'all',
+    label: 'Tất cả các mức',
+  },
+  {
+    value: '1',
+    label: 'Mức 1',
+  },
+  {
+    value: '2',
+    label: 'Mức 2',
+  },
+  {
+    value: '3',
+    label: 'Mức 3',
+  },
+  {
+    value: '4',
+    label: 'Mức 4',
+  },
+  {
+    value: '5',
+    label: 'Mức 5',
+  },
+];
+
 const Categories = () => {
   // State declarations
   const [searchText, setSearchText] = useState('');
   const [data, setData] = useState([]);
+  const [originalData, setOriginalData] = useState([]); // Store original unfiltered data
   const [modalVisible, setModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [levels, setLevels] = useState(defaultLevel);
@@ -70,6 +98,7 @@ const Categories = () => {
   const [expectedLevelCompletionDate, setExpectedLevelCompletionDate] = useState(null);
   const [assignedUser, setAssignedUser] = useState({});
   const [dateFilter, setDateFilter] = useState(outOfDateFilter[0]);
+  const [selectedLevel, setSelectedLevel] = useState('all');
 
   // Effects
   useEffect(() => {
@@ -92,7 +121,16 @@ const Categories = () => {
 
     axiosInstance
       .post('/api/criteria/list', params)
-      .then((response) => setData(response.data.data))
+      .then((response) => {
+        setOriginalData(response.data.data); // Store original data
+        let filteredData = response.data.data;
+        if (selectedLevel !== 'all') {
+          filteredData = filteredData.filter(
+            (item) => item.currentLevel === parseInt(selectedLevel),
+          );
+        }
+        setData(filteredData);
+      })
       .catch((err) => setError(err.message));
   };
 
@@ -240,6 +278,16 @@ const Categories = () => {
     }
   };
 
+  const handleChangeLevelFilter = (value) => {
+    setSelectedLevel(value);
+    if (value === 'all') {
+      setData(originalData);
+    } else {
+      const filteredData = originalData.filter((item) => item.currentLevel === parseInt(value));
+      setData(filteredData);
+    }
+  };
+
   // Table columns configuration
   const columns = [
     {
@@ -330,11 +378,23 @@ const Categories = () => {
           size="large"
           value={dateFilter.name}
           onChange={handleChangeDateFilter}
-          style={{ width: 250 }}
+          style={{ width: 200 }}
         >
           {outOfDateFilter.map((date, index) => (
             <Option value={date.name} key={index}>
               {date.name}
+            </Option>
+          ))}
+        </Select>
+        <Select
+          size="large"
+          value={selectedLevel}
+          onChange={handleChangeLevelFilter}
+          style={{ width: 200 }}
+        >
+          {levelFilter.map((level) => (
+            <Option value={level.value} key={level.value}>
+              {level.label}
             </Option>
           ))}
         </Select>

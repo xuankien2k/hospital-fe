@@ -102,7 +102,12 @@ const Login: React.FC = () => {
             minWidth: 280,
             maxWidth: '75vw',
           }}
-          logo={<img alt="logo" src="https://cdn-icons-png.flaticon.com/128/3580/3580415.png" />}
+          logo={
+            <img
+              alt="logo"
+              src="https://bvdktinhbacgiang.vn/upload/2005838/20211221/Logo_BvDkBG_48212fa986.png"
+            />
+          }
           title="Quản lý Bộ tiêu chí chất lượng bệnh viện"
           subTitle="Đăng nhập"
           initialValues={{

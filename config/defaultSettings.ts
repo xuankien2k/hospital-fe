@@ -17,7 +17,7 @@ const Settings: ProLayoutProps & {
   colorWeak: false,
   title: 'Quản lý Bộ tiêu chí chất lượng bệnh viện',
   pwa: true,
-  logo: 'https://cdn-icons-png.flaticon.com/128/3580/3580415.png',
+  logo: 'https://bvdktinhbacgiang.vn/upload/2005838/20211221/Logo_BvDkBG_48212fa986.png',
   iconfontUrl: '',
   token: {
     // 参见ts声明，demo 见文档，通过token 修改样式
