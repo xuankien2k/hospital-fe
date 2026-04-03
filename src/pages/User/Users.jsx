@@ -239,7 +239,11 @@ const Users = () => {
           <Form.Item name="role" label="Vai trò">
             <Select size="large" defaultValue={selectedUser.role || 'user'}>
               <Option value="admin">Quản lý</Option>
-              <Option value="user">Người dùng</Option>
+              {/* <Option value="user">Người dùng</Option> */}
+              <Option value="director">Ban Giám đốc</Option>
+              {/* <Option value="quality_admin">Phòng Quản lý chất lượng</Option> */}
+              <Option value="department">Trưởng Khoa/Phòng/Trung tâm</Option>
+              <Option value="criteria_officer">Cán bộ phụ trách tiêu chí</Option>
             </Select>
           </Form.Item>
 

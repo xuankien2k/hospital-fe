@@ -1,7 +1,10 @@
 import axios from 'axios';
 
+// API backend chạy tại port 3005 (không dùng proxy 8000)
+const API_BASE_URL = 'http://localhost:3005';
+
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:3005', // Thay thế bằng API của bạn
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
