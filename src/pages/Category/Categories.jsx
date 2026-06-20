@@ -15,6 +15,7 @@ import {
   Collapse,
   Tag,
   Progress,
+  Typography,
 } from 'antd';
 import {
   PlusOutlined,
@@ -37,6 +38,80 @@ import dayjs from 'dayjs';
 const { TextArea } = Input;
 const { Option } = Select;
 const { Panel } = Collapse;
+const { Paragraph } = Typography;
+
+const LEVEL_COLORS = {
+  1: { bg: '#ff4d4f', color: '#ffffff' },
+  2: { bg: '#fa8c16', color: '#ffffff' },
+  3: { bg: '#fadb14', color: '#434343' },
+  4: { bg: '#91d5ff', color: '#0958d9' },
+  5: { bg: '#52c41a', color: '#ffffff' },
+};
+
+const getCurrentLevelValue = (record) => {
+  const val = record?.currentLevel;
+  if (val === undefined || val === null || val === 0) return 1;
+  const num = Number(val);
+  return Number.isFinite(num) ? num : 1;
+};
+
+const getLevelColorStyle = (level) => {
+  const lvl = Math.min(5, Math.max(1, level));
+  return LEVEL_COLORS[lvl];
+};
+
+const sortCriteriaByPartChapterAndCode = (items) =>
+  [...items].sort((a, b) => {
+    const partCmp = String(a.part || '').localeCompare(String(b.part || ''), 'vi', {
+      numeric: true,
+      sensitivity: 'base',
+    });
+    if (partCmp !== 0) return partCmp;
+
+    const chapterCmp = String(a.chapter || '').localeCompare(String(b.chapter || ''), 'vi', {
+      numeric: true,
+      sensitivity: 'base',
+    });
+    if (chapterCmp !== 0) return chapterCmp;
+
+    return String(a.code || '').localeCompare(String(b.code || ''), 'vi', {
+      numeric: true,
+      sensitivity: 'base',
+    });
+  });
+
+const buildTableDataWithGroupHeaders = (items) => {
+  const sorted = sortCriteriaByPartChapterAndCode(items);
+  const result = [];
+  let lastPart = null;
+  let lastChapter = null;
+
+  sorted.forEach((item) => {
+    if (item.part && item.part !== lastPart) {
+      result.push({
+        _id: `part-header-${item.part}`,
+        isPartHeader: true,
+        part: item.part,
+      });
+      lastPart = item.part;
+      lastChapter = null;
+    }
+
+    if (item.chapter && item.chapter !== lastChapter) {
+      result.push({
+        _id: `chapter-header-${item.part}-${item.chapter}`,
+        isChapterHeader: true,
+        part: item.part,
+        chapter: item.chapter,
+      });
+      lastChapter = item.chapter;
+    }
+
+    result.push(item);
+  });
+
+  return result;
+};
 
 const defaultLevel = [
   { levelNumber: 1, subCriterias: [] },
@@ -140,6 +215,8 @@ const Categories = () => {
   const [evidenceTarget, setEvidenceTarget] = useState({ level: null, index: null });
 
   const derivedCurrentLevel = useMemo(() => deriveCurrentLevelFromLevels(levels), [levels]);
+  const tableData = useMemo(() => buildTableDataWithGroupHeaders(data), [data]);
+  const tableColumnCount = 8;
 
   // Effects
   useEffect(() => {
@@ -404,45 +481,114 @@ const Categories = () => {
   const rowStrikeStyle = (inactive) =>
     inactive ? { textDecoration: 'line-through', opacity: 0.75 } : undefined;
 
+  const isGroupHeader = (record) => record.isPartHeader || record.isChapterHeader;
+
+  const groupHeaderOnCell = (record) => (isGroupHeader(record) ? { colSpan: 0 } : {});
+
+  const renderCriteriaName = (text, record) => (
+    <Paragraph
+      ellipsis={{ rows: 2, tooltip: text }}
+      style={{
+        marginBottom: 0,
+        maxWidth: 360,
+        ...rowStrikeStyle(record.status === false),
+      }}
+    >
+      {text}
+    </Paragraph>
+  );
+
   // Table columns configuration
   const columns = [
     {
       title: 'Loại',
       dataIndex: 'code',
       key: 'code',
-      render: (text, record) => <div style={rowStrikeStyle(record.status === false)}>{text}</div>,
+      onCell: (record) => {
+        if (record.isPartHeader) {
+          return { colSpan: tableColumnCount, className: 'criteria-part-header-cell' };
+        }
+        if (record.isChapterHeader) {
+          return { colSpan: tableColumnCount, className: 'criteria-chapter-header-cell' };
+        }
+        const { bg, color } = getLevelColorStyle(getCurrentLevelValue(record));
+        return {
+          style: {
+            backgroundColor: bg,
+            color,
+            fontWeight: 600,
+            borderRadius: '30px',
+            border: '15px solid #fff',
+          },
+        };
+      },
+      render: (text, record) => {
+        if (record.isPartHeader) {
+          return <div className="criteria-part-header">Phần {record.part}</div>;
+        }
+        if (record.isChapterHeader) {
+          return <div className="criteria-chapter-header">Chương {record.chapter}</div>;
+        }
+        return (
+          <div
+            style={{
+              ...rowStrikeStyle(record.status === false),
+              color: 'inherit',
+            }}
+          >
+            {text}
+          </div>
+        );
+      },
     },
     {
       title: 'Tên tiêu chí',
       dataIndex: 'name',
       key: 'name',
-      render: (text, record) => <div style={rowStrikeStyle(record.status === false)}>{text}</div>,
+      width: 380,
+      onCell: groupHeaderOnCell,
+      render: (text, record) => {
+        if (isGroupHeader(record)) return null;
+        return renderCriteriaName(text, record);
+      },
     },
     {
       title: 'Người phụ trách',
       dataIndex: 'assignedUser',
       key: 'assignedUser',
       width: 200,
-      render: (user) => <div>{user?.username}</div>,
+      onCell: groupHeaderOnCell,
+      render: (user, record) => {
+        if (isGroupHeader(record)) return null;
+        return <div>{user?.username}</div>;
+      },
     },
     {
       title: 'Mức hiện tại',
       dataIndex: 'currentLevel',
       key: 'currentLevel',
       width: 100,
-      render: (val) => (val === undefined || val === null || val === 0 ? 1 : val),
+      onCell: groupHeaderOnCell,
+      render: (val, record) => {
+        if (isGroupHeader(record)) return null;
+        return val === undefined || val === null || val === 0 ? 1 : val;
+      },
     },
     {
       title: 'Mức dự kiến',
       dataIndex: 'expectedLevel',
       key: 'expectedLevel',
       width: 100,
+      onCell: groupHeaderOnCell,
+      render: (text, record) => (isGroupHeader(record) ? null : text),
     },
     {
       title: 'Trạng thái / Tiến độ',
       key: 'progress',
       width: 220,
+      onCell: groupHeaderOnCell,
       render: (_, record) => {
+        if (isGroupHeader(record)) return null;
         const inactive = record.status === false;
         const p = getCriteriaProgressPercent(record);
         const { label, tagColor } = getCriteriaProgressStatus(p);
@@ -461,7 +607,9 @@ const Categories = () => {
       dataIndex: 'expectedLevelCompletionDate',
       key: 'expectedLevelCompletionDate',
       width: 200,
-      render: (text) => {
+      onCell: groupHeaderOnCell,
+      render: (text, record) => {
+        if (isGroupHeader(record)) return null;
         const date = new Date(text);
         const color =
           date < new Date() ? 'red' : dayjs(date) < dayjs().add(15, 'day') ? 'orange' : '';
@@ -472,35 +620,39 @@ const Categories = () => {
       title: 'Hành động',
       key: 'action',
       width: 100,
-      render: (_, record) => (
-        <Dropdown
-          overlay={
-            <Menu>
-              <Menu.Item
-                icon={<EditOutlined />}
-                onClick={() =>
-                  isCriteriaOfficer ? showOfficerUpdateModal(record) : showModal(record)
-                }
-              >
-                {isCriteriaOfficer ? 'Cập nhật' : 'Chỉnh sửa'}
-              </Menu.Item>
-              <Menu.Item icon={<DeleteOutlined />} onClick={() => showConfirm(record._id)} danger>
-                Xóa
-              </Menu.Item>
-              {!isCriteriaOfficer && (
+      onCell: groupHeaderOnCell,
+      render: (_, record) => {
+        if (isGroupHeader(record)) return null;
+        return (
+          <Dropdown
+            overlay={
+              <Menu>
                 <Menu.Item
-                  icon={record.status === false ? <CheckCircleOutlined /> : <StopOutlined />}
-                  onClick={() => handleToggleCriteriaStatus(record)}
+                  icon={<EditOutlined />}
+                  onClick={() =>
+                    isCriteriaOfficer ? showOfficerUpdateModal(record) : showModal(record)
+                  }
                 >
-                  {record.status === false ? 'Kích hoạt tiêu chí' : 'Vô hiệu hóa tiêu chí'}
+                  {isCriteriaOfficer ? 'Cập nhật' : 'Chỉnh sửa'}
                 </Menu.Item>
-              )}
-            </Menu>
-          }
-        >
-          <Button icon={<DownOutlined />}>Hành động</Button>
-        </Dropdown>
-      ),
+                <Menu.Item icon={<DeleteOutlined />} onClick={() => showConfirm(record._id)} danger>
+                  Xóa
+                </Menu.Item>
+                {!isCriteriaOfficer && (
+                  <Menu.Item
+                    icon={record.status === false ? <CheckCircleOutlined /> : <StopOutlined />}
+                    onClick={() => handleToggleCriteriaStatus(record)}
+                  >
+                    {record.status === false ? 'Kích hoạt tiêu chí' : 'Vô hiệu hóa tiêu chí'}
+                  </Menu.Item>
+                )}
+              </Menu>
+            }
+          >
+            <Button icon={<DownOutlined />}>Hành động</Button>
+          </Dropdown>
+        );
+      },
     },
   ];
 
@@ -725,6 +877,40 @@ const Categories = () => {
           text-decoration: line-through;
           opacity: 0.75;
         }
+        .criteria-part-header-row > td {
+          background: #f0f0f0 !important;
+          padding-top: 14px !important;
+          padding-bottom: 14px !important;
+        }
+        .criteria-part-header-row:first-child > td {
+          border-top: none !important;
+        }
+        .criteria-part-header-cell {
+          border-bottom: 1px solid #e8e8e8 !important;
+        }
+        .criteria-part-header {
+          font-weight: 700;
+          font-size: 16px;
+          color: rgba(0, 0, 0, 0.88);
+          letter-spacing: 0.3px;
+          text-transform: uppercase;
+        }
+        .criteria-chapter-header-row > td {
+          background: #f7fbff !important;
+          border-top: 1px solid #d6e4ff !important;
+          padding-top: 8px !important;
+          padding-bottom: 8px !important;
+        }
+        .criteria-chapter-header-cell {
+          border-left: 4px solid #1677ff !important;
+          border-bottom: 1px solid #eef4ff !important;
+        }
+        .criteria-chapter-header {
+          font-weight: 600;
+          font-size: 13px;
+          color: #1677ff;
+          padding-left: 12px;
+        }
       `}</style>
       <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
         <Input
@@ -769,11 +955,15 @@ const Categories = () => {
 
       <ProTable
         columns={columns}
-        dataSource={data}
+        dataSource={tableData}
         rowKey="_id"
         search={false}
         pagination={{ pageSize: 100 }}
-        rowClassName={(record) => (record.status === false ? 'criteria-row-inactive' : '')}
+        rowClassName={(record) => {
+          if (record.isPartHeader) return 'criteria-part-header-row';
+          if (record.isChapterHeader) return 'criteria-chapter-header-row';
+          return record.status === false ? 'criteria-row-inactive' : '';
+        }}
       />
 
       <Modal
