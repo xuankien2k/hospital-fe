@@ -601,6 +601,7 @@ const Categories = () => {
             style={{
               ...rowStrikeStyle(record.status === false),
               color: 'inherit',
+              textAlign: 'center',
             }}
           >
             {text}
