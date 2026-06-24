@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useModel } from '@umijs/max';
 import { Table, Card, Input, Select, message, Tag, Progress, Button, Space } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import axiosInstance from '../../utils/axiosInstance';
@@ -7,15 +8,24 @@ import {
   getCriteriaProgressPercent,
   getCriteriaProgressStatus,
 } from '../../utils/criteriaProgress';
+import { canFilterByDepartment } from '../../utils/departments';
+import { isContentAdmin } from '../../utils/roles';
 
 const { Option } = Select;
 const TOTAL_CRITERIA_STANDARD = 83;
 
 const Report = () => {
+  const { initialState } = useModel('@@initialState');
+  const currentUser =
+    initialState?.currentUser || JSON.parse(localStorage.getItem('currentUser') || 'null');
+
   const canFilterByAssignee = useMemo(() => {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
-    return ['admin', 'quality_admin', 'director'].includes(currentUser?.role);
-  }, []);
+    return isContentAdmin(currentUser?.role) || currentUser?.role === 'director';
+  }, [currentUser?.role]);
+
+  const showDepartmentFilter = useMemo(() => {
+    return canFilterByDepartment(currentUser?.role);
+  }, [currentUser?.role]);
 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -23,11 +33,14 @@ const Report = () => {
   const [partFilter, setPartFilter] = useState(undefined);
   const [chapterFilter, setChapterFilter] = useState(undefined);
   const [assignedUserFilter, setAssignedUserFilter] = useState(undefined);
+  const [departmentFilter, setDepartmentFilter] = useState(undefined);
+  const [notAchievedFilter, setNotAchievedFilter] = useState(undefined);
   const [keywordInput, setKeywordInput] = useState('');
   const [keyword, setKeyword] = useState('');
   const [partOptions, setPartOptions] = useState([]);
   const [chapterOptions, setChapterOptions] = useState([]);
   const [userOptions, setUserOptions] = useState([]);
+  const [departmentOptions, setDepartmentOptions] = useState([]);
   const [reportMeta, setReportMeta] = useState({
     totalCriteria: 0,
     totalWeightedScore: 0,
@@ -43,9 +56,10 @@ const Report = () => {
   const loadFilterOptions = useCallback(async () => {
     try {
       setLoadingOptions(true);
-      const [listRes, usersRes] = await Promise.all([
+      const [listRes, usersRes, deptRes] = await Promise.all([
         axiosInstance.post('/api/criteria/list', { page: 1, limit: 500 }),
         axiosInstance.post('/api/users/list', { page: 1, limit: 200 }),
+        axiosInstance.get('/api/departments/list'),
       ]);
       const criteria = listRes.data?.data || [];
       const parts = [...new Set(criteria.map((c) => c.part).filter(Boolean))].sort();
@@ -53,6 +67,7 @@ const Report = () => {
       setPartOptions(parts);
       setChapterOptions(chapters);
       setUserOptions(usersRes.data?.data || []);
+      setDepartmentOptions(deptRes.data?.data || []);
     } catch {
       /* bỏ qua: vẫn dùng được báo cáo */
     } finally {
@@ -72,6 +87,8 @@ const Report = () => {
         chapter: chapterFilter || undefined,
         keyword: keyword || undefined,
         assignedUser: canFilterByAssignee ? assignedUserFilter || undefined : undefined,
+        departmentId: departmentFilter || undefined,
+        notAchieved: notAchievedFilter === 'not_achieved' ? true : undefined,
       };
       const response = await axiosInstance.post('/api/report/quality', params);
       const report = response.data.report;
@@ -92,7 +109,16 @@ const Report = () => {
     } finally {
       setLoading(false);
     }
-  }, [partFilter, chapterFilter, assignedUserFilter, keyword, canFilterByAssignee]);
+  }, [
+    partFilter,
+    chapterFilter,
+    assignedUserFilter,
+    departmentFilter,
+    keyword,
+    notAchievedFilter,
+    canFilterByAssignee,
+    showDepartmentFilter,
+  ]);
 
   useEffect(() => {
     fetchReport();
@@ -102,6 +128,8 @@ const Report = () => {
     setPartFilter(undefined);
     setChapterFilter(undefined);
     setAssignedUserFilter(undefined);
+    setDepartmentFilter(undefined);
+    setNotAchievedFilter(undefined);
     setKeywordInput('');
     setKeyword('');
   };
@@ -252,6 +280,23 @@ const Report = () => {
               </Option>
             ))}
           </Select>
+          {showDepartmentFilter && (
+            <Select
+              placeholder="Khoa/Phòng"
+              value={departmentFilter}
+              onChange={setDepartmentFilter}
+              style={{ width: 200 }}
+              allowClear
+              showSearch
+              optionFilterProp="children"
+            >
+              {departmentOptions.map((dept) => (
+                <Option key={dept._id} value={dept._id}>
+                  {dept.name}
+                </Option>
+              ))}
+            </Select>
+          )}
           {canFilterByAssignee && (
             <Select
               placeholder="Người phụ trách"
@@ -269,6 +314,15 @@ const Report = () => {
               ))}
             </Select>
           )}
+          <Select
+            placeholder="Tiêu đạt"
+            value={notAchievedFilter}
+            onChange={setNotAchievedFilter}
+            style={{ width: 220 }}
+            allowClear
+          >
+            <Option value="not_achieved">Chưa đạt mức dự kiến</Option>
+          </Select>
           <Button onClick={() => fetchReport()} loading={loading}>
             Làm mới dữ liệu
           </Button>

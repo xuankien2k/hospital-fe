@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { PageContainer, ProTable } from '@ant-design/pro-components';
+import { useModel } from '@umijs/max';
 import {
   Input,
   Button,
@@ -32,6 +33,8 @@ import {
   getCriteriaProgressPercent,
   getCriteriaProgressStatus,
 } from '../../utils/criteriaProgress';
+import { canFilterByDepartment, getCriteriaDepartmentOptions } from '../../utils/departments';
+import { isContentAdmin } from '../../utils/roles';
 import { isEmpty, map } from 'lodash';
 import dayjs from 'dayjs';
 
@@ -41,12 +44,48 @@ const { Panel } = Collapse;
 const { Paragraph } = Typography;
 
 const LEVEL_COLORS = {
-  1: { bg: '#ff4d4f', color: '#ffffff' },
-  2: { bg: '#fa8c16', color: '#ffffff' },
-  3: { bg: '#fadb14', color: '#434343' },
-  4: { bg: '#91d5ff', color: '#0958d9' },
-  5: { bg: '#52c41a', color: '#ffffff' },
+  1: { bg: '#000000', color: '#ffffff' },
+  2: { bg: '#99001a', color: '#ffffff' },
+  3: { bg: '#ff0000', color: '#ffff00' },
+  4: { bg: '#ff8000', color: '#ffff00' },
+  5: { bg: '#ffff00', color: '#ff0000' },
 };
+
+const CRITERIA_LEVEL_COLLAPSE_STYLES = `
+  .criteria-level-panel .ant-collapse-header {
+    font-weight: 700;
+  }
+  .criteria-level-panel-1 .ant-collapse-header {
+    background-color: #461901 !important;
+    color: #ffffff !important;
+  }
+  .criteria-level-panel-2 .ant-collapse-header {
+    background-color: #7b3306 !important;
+    color: #ffffff !important;
+  }
+  .criteria-level-panel-3 .ant-collapse-header {
+    background-color: #953d00 !important;
+    color: #ffffff !important;
+  }
+  .criteria-level-panel-4 .ant-collapse-header {
+    background-color: #b75000 !important;
+    color: #ffffff !important;
+  }
+  .criteria-level-panel-5 .ant-collapse-header {
+    background-color: #dd7400 !important;
+    color: #ffffff !important;
+  }
+  .criteria-level-panel .ant-collapse-header .ant-collapse-expand-icon,
+  .criteria-level-panel .ant-collapse-header .ant-collapse-arrow {
+    color: inherit !important;
+  }
+  .criteria-level-panel .ant-collapse-header .ant-checkbox-wrapper {
+    color: inherit;
+  }
+  .criteria-level-panel .ant-collapse-header .ant-checkbox-inner {
+    border-color: currentColor;
+  }
+`;
 
 const getCurrentLevelValue = (record) => {
   const val = record?.currentLevel;
@@ -192,8 +231,12 @@ const deriveCurrentLevelFromLevels = (lvls) => {
 };
 
 const Categories = () => {
-  const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+  const { initialState } = useModel('@@initialState');
+  const currentUser =
+    initialState?.currentUser || JSON.parse(localStorage.getItem('currentUser') || 'null');
   const isCriteriaOfficer = currentUser?.role === 'criteria_officer';
+  const canAdminCriteria = isContentAdmin(currentUser?.role);
+  const showDepartmentFilter = canFilterByDepartment(currentUser?.role);
 
   // State declarations
   const [searchText, setSearchText] = useState('');
@@ -213,20 +256,28 @@ const Categories = () => {
   const [evidenceModalVisible, setEvidenceModalVisible] = useState(false);
   const [evidenceLink, setEvidenceLink] = useState('');
   const [evidenceTarget, setEvidenceTarget] = useState({ level: null, index: null });
+  const [departments, setDepartments] = useState([]);
+  const [departmentFilter, setDepartmentFilter] = useState(undefined);
+
+  const criteriaDepartmentOptions = useMemo(
+    () => getCriteriaDepartmentOptions(departments),
+    [departments],
+  );
 
   const derivedCurrentLevel = useMemo(() => deriveCurrentLevelFromLevels(levels), [levels]);
   const tableData = useMemo(() => buildTableDataWithGroupHeaders(data), [data]);
-  const tableColumnCount = 8;
+  const tableColumnCount = 7;
 
   // Effects
   useEffect(() => {
     list();
     listUser();
+    fetchDepartments();
   }, []);
 
   useEffect(() => {
     list();
-  }, [dateFilter]);
+  }, [dateFilter, departmentFilter]);
 
   // API calls
   const list = () => {
@@ -235,6 +286,7 @@ const Categories = () => {
       limit: 100,
       keyword: searchText,
       out_of_date: dateFilter.value,
+      ...(departmentFilter ? { departmentId: departmentFilter } : {}),
     };
 
     axiosInstance
@@ -264,6 +316,13 @@ const Categories = () => {
       .catch((err) => setError(err.message));
   };
 
+  const fetchDepartments = () => {
+    axiosInstance
+      .get('/api/departments/list')
+      .then((response) => setDepartments(response.data.data || []))
+      .catch(() => setDepartments([]));
+  };
+
   // Event handlers
   const handleSearch = () => list();
 
@@ -275,7 +334,10 @@ const Categories = () => {
       setSelectedId(record._id);
       setExpectedLevelCompletionDate(record.expectedLevelCompletionDate);
       setAssignedUser(record?.assignedUser);
-      form.setFieldsValue(record);
+      form.setFieldsValue({
+        ...record,
+        departmentId: record.departmentId?._id || record.departmentId || undefined,
+      });
     } else {
       setEditData(null);
       form.resetFields();
@@ -292,7 +354,10 @@ const Categories = () => {
     setSelectedId(record._id);
     setExpectedLevelCompletionDate(record.expectedLevelCompletionDate);
     setAssignedUser(record?.assignedUser);
-    form.setFieldsValue(record);
+    form.setFieldsValue({
+      ...record,
+      departmentId: record.departmentId?._id || record.departmentId || undefined,
+    });
   };
 
   const addCriteria = async (newUser) => {
@@ -504,6 +569,7 @@ const Categories = () => {
       title: 'Loại',
       dataIndex: 'code',
       key: 'code',
+      width: 90,
       onCell: (record) => {
         if (record.isPartHeader) {
           return { colSpan: tableColumnCount, className: 'criteria-part-header-cell' };
@@ -519,6 +585,7 @@ const Categories = () => {
             fontWeight: 600,
             borderRadius: '30px',
             border: '15px solid #fff',
+            textAlign: 'center',
           },
         };
       },
@@ -550,17 +617,6 @@ const Categories = () => {
       render: (text, record) => {
         if (isGroupHeader(record)) return null;
         return renderCriteriaName(text, record);
-      },
-    },
-    {
-      title: 'Người phụ trách',
-      dataIndex: 'assignedUser',
-      key: 'assignedUser',
-      width: 200,
-      onCell: groupHeaderOnCell,
-      render: (user, record) => {
-        if (isGroupHeader(record)) return null;
-        return <div>{user?.username}</div>;
       },
     },
     {
@@ -635,9 +691,15 @@ const Categories = () => {
                 >
                   {isCriteriaOfficer ? 'Cập nhật' : 'Chỉnh sửa'}
                 </Menu.Item>
-                <Menu.Item icon={<DeleteOutlined />} onClick={() => showConfirm(record._id)} danger>
-                  Xóa
-                </Menu.Item>
+                {canAdminCriteria && (
+                  <Menu.Item
+                    icon={<DeleteOutlined />}
+                    onClick={() => showConfirm(record._id)}
+                    danger
+                  >
+                    Xóa
+                  </Menu.Item>
+                )}
                 {!isCriteriaOfficer && (
                   <Menu.Item
                     icon={record.status === false ? <CheckCircleOutlined /> : <StopOutlined />}
@@ -659,6 +721,7 @@ const Categories = () => {
   const listLevels = [1, 2, 3, 4, 5];
   const renderCriteriaForm = (isOfficerUpdate = false) => (
     <Form form={form} layout="vertical">
+      <style>{CRITERIA_LEVEL_COLLAPSE_STYLES}</style>
       <Space direction="horizontal">
         <Form.Item
           name="part"
@@ -690,6 +753,22 @@ const Categories = () => {
       >
         <Input size="large" disabled={isOfficerUpdate} />
       </Form.Item>
+
+      {!isOfficerUpdate && (
+        <Form.Item
+          name="departmentId"
+          label="Khoa/Phòng"
+          rules={[{ required: true, message: 'Chọn khoa/phòng' }]}
+        >
+          <Select size="large" placeholder="Chọn khoa/phòng" showSearch optionFilterProp="children">
+            {criteriaDepartmentOptions.map((dept) => (
+              <Option key={dept._id} value={dept._id}>
+                {dept.name}
+              </Option>
+            ))}
+          </Select>
+        </Form.Item>
+      )}
 
       {!isOfficerUpdate && (
         <Form.Item label="Người phụ trách">
@@ -736,136 +815,136 @@ const Categories = () => {
       </div>
 
       <Collapse defaultActiveKey={['1', '2', '3', '4', '5']}>
-        {listLevels.map((level) => (
-          <Panel
-            header={
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 12,
-                }}
-              >
-                <span>{`Mức ${level}`}</span>
+        {listLevels.map((level) => {
+          const levelStyle = getLevelColorStyle(level);
+          return (
+            <Panel
+              className={`criteria-level-panel criteria-level-panel-${level}`}
+              header={
                 <div
-                  onClick={(e) => e.stopPropagation()}
-                  style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    color: '#ffffff',
+                  }}
                 >
-                  <Checkbox
-                    checked={
-                      Array.isArray(levels[level - 1]?.subCriterias) &&
-                      levels[level - 1].subCriterias.length > 0 &&
-                      levels[level - 1].subCriterias.every((subItem) => subItem.status)
-                    }
-                    // indeterminate={
-                    //   Array.isArray(levels[level - 1]?.subCriterias) &&
-                    //   levels[level - 1].subCriterias.some((subItem) => subItem.status) &&
-                    //   !levels[level - 1].subCriterias.every((subItem) => subItem.status)
-                    // }
-                    onChange={(e) => handleToggleLevelStatus(level, e.target.checked)}
-                    style={{ marginRight: 8, color: '#1890ff' }}
+                  <span style={{ fontWeight: 700 }}>{`Mức ${level}`}</span>
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8 }}
                   >
-                    Hoàn thành mức
-                  </Checkbox>
+                    <Checkbox
+                      checked={
+                        Array.isArray(levels[level - 1]?.subCriterias) &&
+                        levels[level - 1].subCriterias.length > 0 &&
+                        levels[level - 1].subCriterias.every((subItem) => subItem.status)
+                      }
+                      onChange={(e) => handleToggleLevelStatus(level, e.target.checked)}
+                      style={{ marginRight: 8, color: 'inherit' }}
+                    >
+                      Hoàn thành mức
+                    </Checkbox>
+                  </div>
                 </div>
-              </div>
-            }
-            key={level}
-          >
-            <div>
-              {!isEmpty(levels) &&
-                levels[level - 1].subCriterias.map((item, index) => {
-                  const currentNum = levels
-                    .slice(0, level - 1)
-                    .reduce((acc, curr) => acc + curr.subCriterias.length, 0);
+              }
+              key={level}
+            >
+              <div>
+                {!isEmpty(levels) &&
+                  levels[level - 1].subCriterias.map((item, index) => {
+                    const currentNum = levels
+                      .slice(0, level - 1)
+                      .reduce((acc, curr) => acc + curr.subCriterias.length, 0);
 
-                  return (
-                    <div key={index} style={{ marginBottom: 16 }}>
-                      <div
-                        style={{
-                          display: 'flex',
-                          gap: 16,
-                          alignItems: 'center',
-                        }}
-                      >
-                        <div>{currentNum + index + 1}</div>
-                        <TextArea
-                          autoSize
-                          rules={[{ required: true, message: 'Nhập tên tiểu mục' }]}
-                          placeholder="Tên tiểu mục"
-                          value={item.text}
-                          onChange={(e) => {
-                            const newSubCriterias = [...levels];
-                            newSubCriterias[level - 1].subCriterias[index].text = e.target.value;
-                            setLevels(newSubCriterias);
+                    return (
+                      <div key={index} style={{ marginBottom: 16 }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            gap: 16,
+                            alignItems: 'center',
                           }}
-                        />
-                        <Checkbox
-                          checked={item.status}
-                          onChange={() => handleChangeStatus(level, index)}
-                        />
-                        <Button
-                          size="small"
-                          type="primary"
-                          onClick={() => openEvidenceModal(level, index)}
                         >
-                          <PlusOutlined /> Minh chứng
-                        </Button>
-                        {!isOfficerUpdate && (
+                          <div>{currentNum + index + 1}</div>
+                          <TextArea
+                            autoSize
+                            rules={[{ required: true, message: 'Nhập tên tiểu mục' }]}
+                            placeholder="Tên tiểu mục"
+                            value={item.text}
+                            onChange={(e) => {
+                              const newSubCriterias = [...levels];
+                              newSubCriterias[level - 1].subCriterias[index].text = e.target.value;
+                              setLevels(newSubCriterias);
+                            }}
+                          />
+                          <Checkbox
+                            checked={item.status}
+                            onChange={() => handleChangeStatus(level, index)}
+                          />
                           <Button
                             size="small"
                             type="primary"
-                            onClick={() => handleDeleteSubItem(level, index)}
+                            onClick={() => openEvidenceModal(level, index)}
                           >
-                            <DeleteOutlined /> Xóa
+                            <PlusOutlined /> Minh chứng
                           </Button>
+                          {!isOfficerUpdate && (
+                            <Button
+                              size="small"
+                              type="primary"
+                              onClick={() => handleDeleteSubItem(level, index)}
+                            >
+                              <DeleteOutlined /> Xóa
+                            </Button>
+                          )}
+                        </div>
+                        {Array.isArray(item.evidences) && item.evidences.length > 0 && (
+                          <div style={{ marginTop: 8, marginLeft: 34 }}>
+                            {item.evidences.map((link, evidenceIndex) => (
+                              <div
+                                key={`evidence-${evidenceIndex}`}
+                                style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+                              >
+                                <a
+                                  href={link}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  style={{
+                                    width: 300,
+                                    display: 'inline-block',
+                                    overflowWrap: 'break-word',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  {link}
+                                </a>
+                                <Button
+                                  size="small"
+                                  danger
+                                  type="link"
+                                  onClick={() => handleDeleteEvidence(level, index, evidenceIndex)}
+                                >
+                                  Xóa
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
                         )}
                       </div>
-                      {Array.isArray(item.evidences) && item.evidences.length > 0 && (
-                        <div style={{ marginTop: 8, marginLeft: 34 }}>
-                          {item.evidences.map((link, evidenceIndex) => (
-                            <div
-                              key={`evidence-${evidenceIndex}`}
-                              style={{ display: 'flex', alignItems: 'center', gap: 8 }}
-                            >
-                              <a
-                                href={link}
-                                target="_blank"
-                                rel="noreferrer"
-                                style={{
-                                  width: 300,
-                                  display: 'inline-block',
-                                  overflowWrap: 'break-word',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
-                                {link}
-                              </a>
-                              <Button
-                                size="small"
-                                danger
-                                type="link"
-                                onClick={() => handleDeleteEvidence(level, index, evidenceIndex)}
-                              >
-                                Xóa
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-            </div>
+                    );
+                  })}
+              </div>
 
-            <Button type="dashed" onClick={() => handleAddSubItem(level)}>
-              + Thêm tiểu mục
-            </Button>
-          </Panel>
-        ))}
+              <Button type="dashed" onClick={() => handleAddSubItem(level)}>
+                + Thêm tiểu mục
+              </Button>
+            </Panel>
+          );
+        })}
       </Collapse>
     </Form>
   );
@@ -924,9 +1003,16 @@ const Categories = () => {
         <Button size="large" type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
           Tìm kiếm
         </Button>
-        <Button size="large" type="primary" icon={<PlusOutlined />} onClick={() => showModal(null)}>
-          Thêm tiêu chí
-        </Button>
+        {canAdminCriteria && (
+          <Button
+            size="large"
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => showModal(null)}
+          >
+            Thêm tiêu chí
+          </Button>
+        )}
         <Select
           size="large"
           value={dateFilter.name}
@@ -951,6 +1037,24 @@ const Categories = () => {
             </Option>
           ))}
         </Select>
+        {showDepartmentFilter && (
+          <Select
+            size="large"
+            placeholder="Khoa/Phòng"
+            value={departmentFilter}
+            onChange={setDepartmentFilter}
+            style={{ width: 220 }}
+            allowClear
+            showSearch
+            optionFilterProp="children"
+          >
+            {departments.map((dept) => (
+              <Option key={dept._id} value={dept._id}>
+                {dept.name}
+              </Option>
+            ))}
+          </Select>
+        )}
       </div>
 
       <ProTable

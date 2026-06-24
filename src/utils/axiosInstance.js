@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-// API backend chạy tại port 3005 (không dùng proxy 8000)
-const API_BASE_URL = 'http://localhost:3005';
+// Dev: localhost. Production: cùng domain (Nginx proxy /api → backend)
+const API_BASE_URL =
+  process.env.NODE_ENV === 'production' ? 'https://bacninh-hospital.com' : 'http://localhost:3005';
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,

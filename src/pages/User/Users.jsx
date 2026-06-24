@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { PageContainer, ProTable } from '@ant-design/pro-components';
+import { useModel } from '@umijs/max';
 import { Input, Button, Modal, Form, Upload, Select, Dropdown, Menu, message } from 'antd';
 import {
   PlusOutlined,
@@ -11,12 +12,15 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import axiosInstance from '../../utils/axiosInstance';
+import { canManageUsersFully, isSystemAdmin } from '../../utils/roles';
 
 const { Option } = Select;
 
 const Users = () => {
-  // Get current user from localStorage
-  const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+  const { initialState } = useModel('@@initialState');
+  const currentUser =
+    initialState?.currentUser || JSON.parse(localStorage.getItem('currentUser') || 'null');
+  const canManageUsers = canManageUsersFully(currentUser?.role);
 
   // State declarations
   const [searchText, setSearchText] = useState('');
@@ -29,11 +33,20 @@ const Users = () => {
   const [isChangePassword, setIsChangePassword] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [departments, setDepartments] = useState([]);
 
   // Effects
   useEffect(() => {
     fetchUsers();
+    fetchDepartments();
   }, []);
+
+  const fetchDepartments = () => {
+    axiosInstance
+      .get('/api/departments/list')
+      .then((response) => setDepartments(response.data.data || []))
+      .catch(() => setDepartments([]));
+  };
 
   // API calls
   const fetchUsers = () => {
@@ -109,10 +122,14 @@ const Users = () => {
       setSelectedId(record._id);
       setEditData(record);
       setIsChangePassword(false);
-      form.setFieldsValue(record);
+      form.setFieldsValue({
+        ...record,
+        departmentId: record.departmentId?._id || record.departmentId || undefined,
+      });
     } else {
       setEditData(null);
       form.resetFields();
+      form.setFieldsValue({ role: 'criteria_officer' });
     }
   };
 
@@ -133,7 +150,7 @@ const Users = () => {
       title: '',
       dataIndex: 'role',
       key: 'role',
-      render: (role) => (role === 'admin' ? <CrownOutlined /> : <UserOutlined />),
+      render: (role) => (isSystemAdmin(role) ? <CrownOutlined /> : <UserOutlined />),
     },
     {
       title: 'Tên người dùng',
@@ -144,6 +161,7 @@ const Users = () => {
       title: 'Khoa/Phòng',
       dataIndex: 'department',
       key: 'department',
+      render: (_, record) => record.departmentId?.name || record.department || '',
     },
     {
       title: 'Email',
@@ -154,8 +172,18 @@ const Users = () => {
       title: 'Vai trò',
       dataIndex: 'role',
       key: 'role',
+      render: (role) => {
+        const labels = {
+          admin: 'Quản trị viên (Admin)',
+          director: 'Ban Giám đốc',
+          quality_admin: 'Phòng Quản lý chất lượng',
+          department: 'Trưởng Khoa/Phòng',
+          criteria_officer: 'Cán bộ phụ trách tiêu chí',
+        };
+        return labels[role] || role;
+      },
     },
-    currentUser.role === 'admin' && {
+    canManageUsers && {
       title: 'Hành động',
       key: 'action',
       width: 100,
@@ -193,16 +221,18 @@ const Users = () => {
         <Button type="primary" icon={<SearchOutlined />} size="large" onClick={handleSearch}>
           Tìm kiếm
         </Button>
-        <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => showModal()}>
-          Thêm
-        </Button>
+        {canManageUsers && (
+          <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => showModal()}>
+            Thêm
+          </Button>
+        )}
       </div>
 
       {/* Users Table */}
       <ProTable
         columns={columns}
         dataSource={data}
-        rowKey="id"
+        rowKey="_id"
         search={false}
         pagination={{ pageSize: 200 }}
         loading={loading}
@@ -215,7 +245,7 @@ const Users = () => {
         onCancel={() => setModalVisible(false)}
         onOk={handleSave}
       >
-        <Form form={form} layout="vertical">
+        <Form form={form} layout="vertical" initialValues={{ role: 'criteria_officer' }}>
           <Form.Item
             name="username"
             label="Tên người dùng"
@@ -224,8 +254,23 @@ const Users = () => {
             <Input size="large" />
           </Form.Item>
 
-          <Form.Item name="department" label="Khoa/Phòng">
-            <Input size="large" />
+          <Form.Item
+            name="departmentId"
+            label="Khoa/Phòng"
+            rules={[{ required: true, message: 'Chọn khoa/phòng' }]}
+          >
+            <Select
+              size="large"
+              placeholder="Chọn khoa/phòng"
+              showSearch
+              optionFilterProp="children"
+            >
+              {departments.map((dept) => (
+                <Option key={dept._id} value={dept._id}>
+                  {dept.name}
+                </Option>
+              ))}
+            </Select>
           </Form.Item>
 
           <Form.Item
@@ -237,11 +282,10 @@ const Users = () => {
           </Form.Item>
 
           <Form.Item name="role" label="Vai trò">
-            <Select size="large" defaultValue={selectedUser.role || 'user'}>
-              <Option value="admin">Quản lý</Option>
-              {/* <Option value="user">Người dùng</Option> */}
+            <Select size="large">
+              <Option value="admin">Quản trị viên (Admin)</Option>
               <Option value="director">Ban Giám đốc</Option>
-              {/* <Option value="quality_admin">Phòng Quản lý chất lượng</Option> */}
+              <Option value="quality_admin">Phòng Quản lý chất lượng</Option>
               <Option value="department">Trưởng Khoa/Phòng/Trung tâm</Option>
               <Option value="criteria_officer">Cán bộ phụ trách tiêu chí</Option>
             </Select>

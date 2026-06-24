@@ -26,6 +26,7 @@ export default [
     path: '/user-list',
     name: 'Danh sách người dùng',
     icon: 'user',
+    access: 'canViewUserList',
     component: './User/Users',
   },
   {
@@ -45,6 +46,7 @@ export default [
     name: 'admin',
     icon: 'crown',
     access: 'canAdmin',
+    hideInMenu: true,
     routes: [
       {
         path: '/admin',

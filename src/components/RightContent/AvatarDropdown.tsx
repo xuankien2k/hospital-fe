@@ -1,4 +1,3 @@
-import { outLogin } from '@/services/ant-design-pro/api';
 import { LogoutOutlined, SettingOutlined, UserOutlined, CrownOutlined } from '@ant-design/icons';
 import { history, useModel } from '@umijs/max';
 import { Spin } from 'antd';
@@ -8,6 +7,7 @@ import { stringify } from 'querystring';
 import React from 'react';
 import { flushSync } from 'react-dom';
 import HeaderDropdown from '../HeaderDropdown';
+import { isSystemAdmin } from '../../utils/roles';
 
 export type GlobalHeaderRightProps = {
   menu?: boolean;
@@ -19,7 +19,7 @@ export const AvatarName = () => {
   const { currentUser } = initialState || {};
   return (
     <span className="anticon">
-      {currentUser?.role === 'admin' && (
+      {isSystemAdmin(currentUser?.role) && (
         <CrownOutlined style={{ marginRight: 4, color: '#faad14' }} />
       )}
       {currentUser?.role === 'user' && <UserOutlined style={{ marginRight: 4 }} />}
@@ -50,14 +50,12 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
   /**
    * 退出登录，并且将当前的 url 保存
    */
-  const loginOut = async () => {
-    await outLogin();
+  const loginOut = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('currentUser');
+
     const { search, pathname } = window.location;
-    const urlParams = new URL(window.location.href).searchParams;
-    /** 此方法会跳转到 redirect 参数所在的位置 */
-    const redirect = urlParams.get('redirect');
-    // Note: There may be security issues, please note
-    if (window.location.pathname !== '/user/login' && !redirect) {
+    if (pathname !== '/user/login') {
       history.replace({
         pathname: '/user/login',
         search: stringify({
