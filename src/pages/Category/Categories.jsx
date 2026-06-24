@@ -44,37 +44,26 @@ const { Panel } = Collapse;
 const { Paragraph } = Typography;
 
 const LEVEL_COLORS = {
-  1: { bg: '#000000', color: '#ffffff' },
-  2: { bg: '#99001a', color: '#ffffff' },
-  3: { bg: '#ff0000', color: '#ffff00' },
-  4: { bg: '#ff8000', color: '#ffff00' },
-  5: { bg: '#ffff00', color: '#ff0000' },
+  1: { bg: '#461901', color: '#ffffff' },
+  2: { bg: '#953d00', color: '#ffffff' },
+  3: { bg: '#dd7400', color: '#ffffff' },
+  4: { bg: '#fcbb00', color: '#ffffff' },
+  5: { bg: '#fee685', color: '#000000' },
 };
 
 const CRITERIA_LEVEL_COLLAPSE_STYLES = `
   .criteria-level-panel .ant-collapse-header {
     font-weight: 700;
   }
-  .criteria-level-panel-1 .ant-collapse-header {
-    background-color: #461901 !important;
-    color: #ffffff !important;
-  }
-  .criteria-level-panel-2 .ant-collapse-header {
-    background-color: #7b3306 !important;
-    color: #ffffff !important;
-  }
-  .criteria-level-panel-3 .ant-collapse-header {
-    background-color: #953d00 !important;
-    color: #ffffff !important;
-  }
-  .criteria-level-panel-4 .ant-collapse-header {
-    background-color: #b75000 !important;
-    color: #ffffff !important;
-  }
-  .criteria-level-panel-5 .ant-collapse-header {
-    background-color: #dd7400 !important;
-    color: #ffffff !important;
-  }
+  ${Object.entries(LEVEL_COLORS)
+    .map(
+      ([level, { bg, color }]) =>
+        `.criteria-level-panel-${level} .ant-collapse-header {
+    background-color: ${bg} !important;
+    color: ${color} !important;
+  }`,
+    )
+    .join('\n')}
   .criteria-level-panel .ant-collapse-header .ant-collapse-expand-icon,
   .criteria-level-panel .ant-collapse-header .ant-collapse-arrow {
     color: inherit !important;
@@ -95,9 +84,35 @@ const getCurrentLevelValue = (record) => {
 };
 
 const getLevelColorStyle = (level) => {
-  const lvl = Math.min(5, Math.max(1, level));
-  return LEVEL_COLORS[lvl];
+  const lvl = Math.min(5, Math.max(1, Number(level) || 1));
+  return LEVEL_COLORS[lvl] || LEVEL_COLORS[1];
 };
+
+const parseStoredUser = () => {
+  try {
+    const raw = localStorage.getItem('currentUser');
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    localStorage.removeItem('currentUser');
+    return null;
+  }
+};
+
+const normalizeCriteriaLevels = (levels) =>
+  defaultLevel.map((defaultLvl) => {
+    const found = Array.isArray(levels)
+      ? levels.find((l) => l.levelNumber === defaultLvl.levelNumber)
+      : null;
+    if (!found) {
+      return { ...defaultLvl, subCriterias: [] };
+    }
+    return {
+      ...defaultLvl,
+      ...found,
+      subCriterias: Array.isArray(found.subCriterias) ? found.subCriterias : [],
+    };
+  });
 
 const sortCriteriaByPartChapterAndCode = (items) =>
   [...items].sort((a, b) => {
@@ -232,8 +247,7 @@ const deriveCurrentLevelFromLevels = (lvls) => {
 
 const Categories = () => {
   const { initialState } = useModel('@@initialState');
-  const currentUser =
-    initialState?.currentUser || JSON.parse(localStorage.getItem('currentUser') || 'null');
+  const currentUser = initialState?.currentUser || parseStoredUser();
   const isCriteriaOfficer = currentUser?.role === 'criteria_officer';
   const canAdminCriteria = isContentAdmin(currentUser?.role);
   const showDepartmentFilter = canFilterByDepartment(currentUser?.role);
@@ -330,7 +344,7 @@ const Categories = () => {
     setModalVisible(true);
     if (record) {
       setEditData(record);
-      setLevels(record?.levels || []);
+      setLevels(normalizeCriteriaLevels(record?.levels));
       setSelectedId(record._id);
       setExpectedLevelCompletionDate(record.expectedLevelCompletionDate);
       setAssignedUser(record?.assignedUser);
@@ -350,7 +364,7 @@ const Categories = () => {
   const showOfficerUpdateModal = (record) => {
     setOfficerUpdateModalVisible(true);
     setEditData(record);
-    setLevels(record?.levels || []);
+    setLevels(normalizeCriteriaLevels(record?.levels));
     setSelectedId(record._id);
     setExpectedLevelCompletionDate(record.expectedLevelCompletionDate);
     setAssignedUser(record?.assignedUser);
@@ -828,10 +842,10 @@ const Categories = () => {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     gap: 12,
-                    color: '#ffffff',
+                    color: levelStyle.color,
                   }}
                 >
-                  <span style={{ fontWeight: 700 }}>{`Mức ${level}`}</span>
+                  <span style={{ fontWeight: 700, color: levelStyle.color }}>{`Mức ${level}`}</span>
                   <div
                     onClick={(e) => e.stopPropagation()}
                     style={{ display: 'flex', alignItems: 'center', gap: 8 }}
@@ -853,91 +867,90 @@ const Categories = () => {
               key={level}
             >
               <div>
-                {!isEmpty(levels) &&
-                  levels[level - 1].subCriterias.map((item, index) => {
-                    const currentNum = levels
-                      .slice(0, level - 1)
-                      .reduce((acc, curr) => acc + curr.subCriterias.length, 0);
+                {(levels[level - 1]?.subCriterias || []).map((item, index) => {
+                  const currentNum = levels
+                    .slice(0, level - 1)
+                    .reduce((acc, curr) => acc + (curr?.subCriterias?.length || 0), 0);
 
-                    return (
-                      <div key={index} style={{ marginBottom: 16 }}>
-                        <div
-                          style={{
-                            display: 'flex',
-                            gap: 16,
-                            alignItems: 'center',
+                  return (
+                    <div key={index} style={{ marginBottom: 16 }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          gap: 16,
+                          alignItems: 'center',
+                        }}
+                      >
+                        <div>{currentNum + index + 1}</div>
+                        <TextArea
+                          autoSize
+                          rules={[{ required: true, message: 'Nhập tên tiểu mục' }]}
+                          placeholder="Tên tiểu mục"
+                          value={item.text}
+                          onChange={(e) => {
+                            const newSubCriterias = [...levels];
+                            newSubCriterias[level - 1].subCriterias[index].text = e.target.value;
+                            setLevels(newSubCriterias);
                           }}
+                        />
+                        <Checkbox
+                          checked={item.status}
+                          onChange={() => handleChangeStatus(level, index)}
+                        />
+                        <Button
+                          size="small"
+                          type="primary"
+                          onClick={() => openEvidenceModal(level, index)}
                         >
-                          <div>{currentNum + index + 1}</div>
-                          <TextArea
-                            autoSize
-                            rules={[{ required: true, message: 'Nhập tên tiểu mục' }]}
-                            placeholder="Tên tiểu mục"
-                            value={item.text}
-                            onChange={(e) => {
-                              const newSubCriterias = [...levels];
-                              newSubCriterias[level - 1].subCriterias[index].text = e.target.value;
-                              setLevels(newSubCriterias);
-                            }}
-                          />
-                          <Checkbox
-                            checked={item.status}
-                            onChange={() => handleChangeStatus(level, index)}
-                          />
+                          <PlusOutlined /> Minh chứng
+                        </Button>
+                        {!isOfficerUpdate && (
                           <Button
                             size="small"
                             type="primary"
-                            onClick={() => openEvidenceModal(level, index)}
+                            onClick={() => handleDeleteSubItem(level, index)}
                           >
-                            <PlusOutlined /> Minh chứng
+                            <DeleteOutlined /> Xóa
                           </Button>
-                          {!isOfficerUpdate && (
-                            <Button
-                              size="small"
-                              type="primary"
-                              onClick={() => handleDeleteSubItem(level, index)}
-                            >
-                              <DeleteOutlined /> Xóa
-                            </Button>
-                          )}
-                        </div>
-                        {Array.isArray(item.evidences) && item.evidences.length > 0 && (
-                          <div style={{ marginTop: 8, marginLeft: 34 }}>
-                            {item.evidences.map((link, evidenceIndex) => (
-                              <div
-                                key={`evidence-${evidenceIndex}`}
-                                style={{ display: 'flex', alignItems: 'center', gap: 8 }}
-                              >
-                                <a
-                                  href={link}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  style={{
-                                    width: 300,
-                                    display: 'inline-block',
-                                    overflowWrap: 'break-word',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap',
-                                  }}
-                                >
-                                  {link}
-                                </a>
-                                <Button
-                                  size="small"
-                                  danger
-                                  type="link"
-                                  onClick={() => handleDeleteEvidence(level, index, evidenceIndex)}
-                                >
-                                  Xóa
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
                         )}
                       </div>
-                    );
-                  })}
+                      {Array.isArray(item.evidences) && item.evidences.length > 0 && (
+                        <div style={{ marginTop: 8, marginLeft: 34 }}>
+                          {item.evidences.map((link, evidenceIndex) => (
+                            <div
+                              key={`evidence-${evidenceIndex}`}
+                              style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+                            >
+                              <a
+                                href={link}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{
+                                  width: 300,
+                                  display: 'inline-block',
+                                  overflowWrap: 'break-word',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {link}
+                              </a>
+                              <Button
+                                size="small"
+                                danger
+                                type="link"
+                                onClick={() => handleDeleteEvidence(level, index, evidenceIndex)}
+                              >
+                                Xóa
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               <Button type="dashed" onClick={() => handleAddSubItem(level)}>
