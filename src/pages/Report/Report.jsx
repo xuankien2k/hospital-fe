@@ -42,11 +42,22 @@ const REPORT_CARD_STYLE = {
 };
 const REPORT_TABLE_CLASS = 'report-quality-table';
 
-const columnChartStyle = {
+const buildChartYMax = (data, field, floor = 5) => {
+  const max = Math.max(0, ...data.map((item) => Number(item[field]) || 0));
+  if (max === 0) return floor;
+  return Math.max(floor, Math.ceil(max * 1.12));
+};
+
+const reportColumnStyle = {
   fill: CHART_COLOR_3,
-  radiusTopLeft: 14,
-  radiusTopRight: 14,
-  inset: 8,
+  radiusTopLeft: 6,
+  radiusTopRight: 6,
+  maxWidth: 56,
+};
+
+const reportColumnAxis = {
+  x: { title: false, line: true, tick: true },
+  y: { title: false, grid: true, gridLineDash: [4, 4] },
 };
 
 const ReportSectionTitle = ({ children }) => (
@@ -269,6 +280,8 @@ const Report = () => {
     label: `${p.part}. ${p.label}`,
     avgScore: Number(Number(p.avgScore).toFixed(2)),
   }));
+
+  const levelChartYMax = buildChartYMax(levelChartData, 'count', 5);
 
   const notAchievedCriteriaList = useMemo(() => {
     const source = matrix.length ? matrix : details;
@@ -609,14 +622,18 @@ const Report = () => {
           xField="level"
           yField="count"
           height={300}
-          scale={{ x: { padding: 0.35 } }}
-          label={{ position: 'top', style: { fill: '#434343', fontWeight: 500 } }}
-          color={CHART_COLOR_3}
-          style={columnChartStyle}
-          axis={{
-            x: { title: false, line: true, tick: true },
-            y: { title: false, grid: true, gridLineDash: [4, 4] },
+          scale={{
+            y: { domain: [0, levelChartYMax], nice: false },
+            x: { padding: 0.4 },
           }}
+          label={{
+            position: 'top',
+            offset: 4,
+            style: { fill: '#595959', fontWeight: 500, fontSize: 12 },
+          }}
+          color={CHART_COLOR_3}
+          style={reportColumnStyle}
+          axis={reportColumnAxis}
         />
       </Card>
 
@@ -636,17 +653,20 @@ const Report = () => {
           xField="label"
           yField="avgScore"
           height={320}
-          scale={{ y: { domain: [0, 5], nice: false }, x: { padding: 0.35 } }}
+          scale={{
+            y: { domain: [0, 5], nice: false },
+            x: { padding: 0.4 },
+          }}
           label={{
-            text: (d) => Number(d.avgScore).toFixed(2),
             position: 'top',
-            style: { fill: '#434343', fontWeight: 500 },
+            offset: 4,
+            style: { fill: '#595959', fontWeight: 500, fontSize: 12 },
           }}
           color={CHART_COLOR_3}
-          style={columnChartStyle}
+          style={reportColumnStyle}
           axis={{
-            x: { title: false, line: true, tick: true, labelAutoRotate: true },
-            y: { title: false, grid: true, gridLineDash: [4, 4] },
+            ...reportColumnAxis,
+            x: { ...reportColumnAxis.x, labelAutoRotate: partChartData.length > 3 },
           }}
         />
       </Card>
