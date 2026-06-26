@@ -1,30 +1,88 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useModel } from '@umijs/max';
-import {
-  Table,
-  Card,
-  Input,
-  Select,
-  message,
-  Tag,
-  Progress,
-  Button,
-  Space,
-  Typography,
-} from 'antd';
+import { Table, Card, message, Tag, Progress, Typography, Row, Col, Tooltip, Button } from 'antd';
 import { Column } from '@ant-design/plots';
-import { SearchOutlined } from '@ant-design/icons';
+import { InfoCircleOutlined, DownloadOutlined } from '@ant-design/icons';
 import axiosInstance from '../../utils/axiosInstance';
 import dayjs from 'dayjs';
 import {
   getCriteriaProgressPercent,
   getCriteriaProgressStatus,
+  getCriteriaCurrentLevel,
+  getCriteriaExpectedLevel,
+  isCriteriaBelowExpectedLevel,
 } from '../../utils/criteriaProgress';
 import { canFilterByDepartment } from '../../utils/departments';
 import { isContentAdmin } from '../../utils/roles';
 
-const { Option } = Select;
 const { Title, Text } = Typography;
+
+const CHART_COLOR_3 = '#8879DF';
+const SECTION_GAP = 32;
+const SECTION_TITLE_STYLE = {
+  margin: 0,
+  marginBottom: 24,
+  fontSize: 18,
+  fontWeight: 600,
+  color: '#141414',
+  lineHeight: 1.4,
+};
+const CHART_TITLE_STYLE = {
+  margin: '8px 0 16px',
+  fontSize: 15,
+  fontWeight: 600,
+  color: '#434343',
+  lineHeight: 1.4,
+};
+const REPORT_CARD_STYLE = {
+  marginBottom: SECTION_GAP,
+  borderRadius: 12,
+  border: '1px solid #e8e8e8',
+  boxShadow: '0 2px 12px rgba(0, 0, 0, 0.06)',
+};
+const REPORT_TABLE_CLASS = 'report-quality-table';
+
+const columnChartStyle = {
+  fill: CHART_COLOR_3,
+  radiusTopLeft: 14,
+  radiusTopRight: 14,
+  inset: 8,
+};
+
+const ReportSectionTitle = ({ children }) => (
+  <Title level={4} style={SECTION_TITLE_STYLE}>
+    {children}
+  </Title>
+);
+
+const ReportChartTitle = ({ children }) => (
+  <Title level={5} style={CHART_TITLE_STYLE}>
+    {children}
+  </Title>
+);
+
+const SummaryStatBlock = ({ label, value, tooltip }) => (
+  <div
+    style={{
+      background: '#fff',
+      border: '1px solid #e8e8e8',
+      borderRadius: 12,
+      padding: '22px 24px',
+      minHeight: 108,
+      boxShadow: '0 1px 4px rgba(0, 0, 0, 0.04)',
+    }}
+  >
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+      <Text type="secondary" style={{ fontSize: 14, lineHeight: 1.4 }}>
+        {label}
+      </Text>
+      <Tooltip title={tooltip}>
+        <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: 14, cursor: 'help' }} />
+      </Tooltip>
+    </div>
+    <div style={{ fontSize: 32, fontWeight: 700, color: '#141414', lineHeight: 1.2 }}>{value}</div>
+  </div>
+);
 
 const parseStoredUser = () => {
   try {
@@ -49,25 +107,26 @@ const Report = () => {
   }, [currentUser?.role]);
 
   const [loading, setLoading] = useState(false);
-  const [loadingOptions, setLoadingOptions] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  // const [loadingOptions, setLoadingOptions] = useState(false);
   const [partFilter, setPartFilter] = useState(undefined);
   const [chapterFilter, setChapterFilter] = useState(undefined);
   const [assignedUserFilter, setAssignedUserFilter] = useState(undefined);
   const [departmentFilter, setDepartmentFilter] = useState(undefined);
   const [notAchievedFilter, setNotAchievedFilter] = useState(undefined);
-  const [keywordInput, setKeywordInput] = useState('');
+  // const [keywordInput, setKeywordInput] = useState('');
   const [keyword, setKeyword] = useState('');
-  const [partOptions, setPartOptions] = useState([]);
-  const [chapterOptions, setChapterOptions] = useState([]);
-  const [userOptions, setUserOptions] = useState([]);
-  const [departmentOptions, setDepartmentOptions] = useState([]);
+  // const [partOptions, setPartOptions] = useState([]);
+  // const [chapterOptions, setChapterOptions] = useState([]);
+  // const [userOptions, setUserOptions] = useState([]);
+  // const [departmentOptions, setDepartmentOptions] = useState([]);
 
   const [summary, setSummary] = useState(null);
   const [details, setDetails] = useState([]);
   const [belowLevel3, setBelowLevel3] = useState([]);
-  const [notAchievedSubcriteria, setNotAchievedSubcriteria] = useState([]);
   const [matrix, setMatrix] = useState([]);
 
+  /*
   useEffect(() => {
     const t = setTimeout(() => setKeyword(keywordInput.trim()), 400);
     return () => clearTimeout(t);
@@ -87,7 +146,7 @@ const Report = () => {
       setUserOptions(usersRes.data?.data || []);
       setDepartmentOptions(deptRes.data?.data || []);
     } catch {
-      /* bỏ qua */
+      // bỏ qua
     } finally {
       setLoadingOptions(false);
     }
@@ -96,6 +155,7 @@ const Report = () => {
   useEffect(() => {
     loadFilterOptions();
   }, [loadFilterOptions]);
+  */
 
   const fetchReport = useCallback(async () => {
     try {
@@ -114,7 +174,6 @@ const Report = () => {
       setSummary(report.summary || null);
       setDetails(report.details || []);
       setBelowLevel3(report.belowLevel3 || []);
-      setNotAchievedSubcriteria(report.notAchievedSubcriteria || []);
       setMatrix(report.matrix || report.details || []);
     } catch (err) {
       message.error(err.message || 'Không tải được báo cáo');
@@ -135,6 +194,48 @@ const Report = () => {
     fetchReport();
   }, [fetchReport]);
 
+  const handleExportReport = async () => {
+    try {
+      setExporting(true);
+      const response = await axiosInstance.post(
+        '/api/report/quality/export',
+        {},
+        { responseType: 'blob', timeout: 60000 },
+      );
+      const contentType = response.headers['content-type'] || '';
+      if (contentType.includes('application/json')) {
+        const text = await response.data.text();
+        const err = JSON.parse(text);
+        throw new Error(err.message || 'Không xuất được báo cáo');
+      }
+      const url = window.URL.createObjectURL(response.data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Bao-cao-CTCL-${dayjs().format('YYYYMMDD')}.docx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      message.success('Đã xuất báo cáo Word');
+    } catch (err) {
+      const data = err.response?.data;
+      if (data instanceof Blob) {
+        try {
+          const text = await data.text();
+          const parsed = JSON.parse(text);
+          message.error(parsed.message || 'Không xuất được báo cáo');
+          return;
+        } catch {
+          /* fall through */
+        }
+      }
+      message.error(err.message || 'Không xuất được báo cáo');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  /*
   const handleClearFilters = () => {
     setPartFilter(undefined);
     setChapterFilter(undefined);
@@ -144,6 +245,7 @@ const Report = () => {
     setKeywordInput('');
     setKeyword('');
   };
+  */
 
   const byLevel = summary?.byLevel || {
     level1: 0,
@@ -167,6 +269,45 @@ const Report = () => {
     label: `${p.part}. ${p.label}`,
     avgScore: Number(Number(p.avgScore).toFixed(2)),
   }));
+
+  const notAchievedCriteriaList = useMemo(() => {
+    const source = matrix.length ? matrix : details;
+    return source.filter(isCriteriaBelowExpectedLevel).map((c) => ({
+      _id: c._id,
+      code: c.code,
+      name: c.name,
+      currentLevel: getCriteriaCurrentLevel(c),
+      expectedLevel: getCriteriaExpectedLevel(c),
+      departmentName: c.departmentName,
+    }));
+  }, [matrix, details]);
+
+  const excludedCodesText = summary?.excludedCodes?.length
+    ? summary.excludedCodes.join(', ')
+    : 'C4.5, C4.6, C5.1';
+
+  const summaryStatBlocks = [
+    {
+      label: 'Tiêu chí áp dụng',
+      value: `${totalApplied}/${totalStandard}`,
+      tooltip: `Tổng số tiêu chí được áp dụng đánh giá trên bộ chuẩn ${totalStandard} tiêu chí. Không đánh giá ${excludedCodesText}.`,
+    },
+    {
+      label: 'Tỷ lệ áp dụng',
+      value: `${summary?.appliedPercent?.toFixed(0) || 0}%`,
+      tooltip: `Tỷ lệ tiêu chí áp dụng = ${totalApplied}/${totalStandard} tiêu chí chuẩn.`,
+    },
+    {
+      label: 'Tổng điểm',
+      value: summary?.totalWeightedScore || 0,
+      tooltip: `Tổng điểm có hệ số chương (C3/C5 nhân 2). Hệ số: ${summary?.totalWeight || 0}.`,
+    },
+    {
+      label: 'Điểm trung bình',
+      value: summary?.overallScore?.toFixed(2) || '0.00',
+      tooltip: 'Điểm trung bình chung các tiêu chí được áp dụng đánh giá.',
+    },
+  ];
 
   const percentageByLevel = {
     level1: totalApplied ? ((byLevel.level1 / totalApplied) * 100).toFixed(2) : '0',
@@ -245,15 +386,6 @@ const Report = () => {
     { title: 'Khoa/Phòng', dataIndex: 'departmentName', key: 'departmentName', width: 160 },
   ];
 
-  const subcriteriaColumns = [
-    { title: 'STT', key: 'stt', width: 60, render: (_, __, i) => i + 1 },
-    { title: 'Tiêu chí', dataIndex: 'code', key: 'code', width: 90 },
-    { title: 'Tiểu mục chưa đạt', dataIndex: 'subcriteriaText', key: 'subcriteriaText' },
-    { title: 'Mức đạt hiện tại', dataIndex: 'currentLevel', key: 'currentLevel', width: 110 },
-    { title: 'Kế hoạch', dataIndex: 'expectedLevel', key: 'expectedLevel', width: 90 },
-    { title: 'Khoa/Phòng', dataIndex: 'departmentName', key: 'departmentName', width: 140 },
-  ];
-
   const matrixColumns = [
     { title: 'Mã số', dataIndex: 'code', key: 'code', width: 90 },
     { title: 'Chỉ tiêu', dataIndex: 'name', key: 'name' },
@@ -262,9 +394,15 @@ const Report = () => {
       dataIndex: 'currentLevel',
       key: 'currentLevel',
       width: 120,
-      render: (val) => (val === undefined || val === null || val === 0 ? 1 : val),
+      render: (_, record) => getCriteriaCurrentLevel(record),
     },
-    { title: 'Kế hoạch', dataIndex: 'expectedLevel', key: 'expectedLevel', width: 90 },
+    {
+      title: 'Kế hoạch',
+      dataIndex: 'expectedLevel',
+      key: 'expectedLevel',
+      width: 90,
+      render: (_, record) => getCriteriaExpectedLevel(record),
+    },
     {
       title: 'Khoa/Phòng phụ trách',
       dataIndex: 'departmentName',
@@ -310,8 +448,38 @@ const Report = () => {
     { title: 'Khoa/Phòng', dataIndex: 'departmentName', key: 'departmentName' },
   ];
 
+  const reportTableProps = {
+    className: REPORT_TABLE_CLASS,
+    bordered: true,
+    size: 'middle',
+  };
+
   return (
-    <div>
+    <div className="report-quality-page">
+      <style>
+        {`
+          .report-quality-page .${REPORT_TABLE_CLASS} .ant-table-thead > tr > th {
+            background: #f3f4f5 !important;
+            color: #141414 !important;
+            font-weight: 600 !important;
+            border-color: #e8e8e8 !important;
+          }
+          .report-quality-page .${REPORT_TABLE_CLASS} .ant-table-tbody > tr > td {
+            border-color: #f0f0f0;
+          }
+          .report-quality-page .${REPORT_TABLE_CLASS} .ant-table-tbody > tr:nth-child(even) > td {
+            background: #fafcff;
+          }
+          .report-quality-page .${REPORT_TABLE_CLASS} .ant-table-tbody > tr.report-matrix-below-plan > td {
+            background: #fff1f0 !important;
+            color: #cf1322;
+          }
+          .report-quality-page .${REPORT_TABLE_CLASS} .ant-table-tbody > tr.report-matrix-below-plan:hover > td {
+            background: #ffccc7 !important;
+          }
+        `}
+      </style>
+      {/*
       <Card title="Bộ lọc báo cáo" style={{ marginBottom: 16 }} loading={loadingOptions}>
         <Space wrap align="start" size="middle">
           <Input
@@ -397,76 +565,96 @@ const Report = () => {
           <Button onClick={handleClearFilters}>Xóa bộ lọc</Button>
         </Space>
       </Card>
+      */}
 
-      <Card style={{ marginBottom: 16 }} loading={loading}>
-        <Title level={3}>I. TÓM TẮT KẾT QUẢ BỘ TIÊU CHÍ CHẤT LƯỢNG BỆNH VIỆN</Title>
-        <Text strong style={{ fontSize: 18, display: 'block', marginBottom: 8 }}>
-          1. TỔNG SỐ CÁC TIÊU CHÍ ĐƯỢC ÁP DỤNG ĐÁNH GIÁ: {totalApplied}/{totalStandard} tiêu chí
-          {summary?.excludedCodes?.length
-            ? ` (không đánh giá ${summary.excludedCodes.join(', ')})`
-            : ''}
-        </Text>
-        <Text strong style={{ fontSize: 18, display: 'block', marginBottom: 8 }}>
-          2. TỶ LỆ TIÊU CHÍ ÁP DỤNG: {summary?.appliedPercent?.toFixed(0) || 0}%
-        </Text>
-        <Text strong style={{ fontSize: 18, display: 'block', marginBottom: 8 }}>
-          3. TỔNG SỐ ĐIỂM (hệ số C3/C5 ×2): {summary?.totalWeightedScore || 0} (hệ số:{' '}
-          {summary?.totalWeight || 0})
-        </Text>
-        <Text strong style={{ fontSize: 18, display: 'block', marginBottom: 16 }}>
-          4. ĐIỂM TRUNG BÌNH CHUNG: {summary?.overallScore?.toFixed(2) || '0.00'}
-        </Text>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          marginBottom: 16,
+        }}
+      >
+        <Button
+          type="primary"
+          icon={<DownloadOutlined />}
+          loading={exporting}
+          onClick={handleExportReport}
+        >
+          Xuất báo cáo Word
+        </Button>
+      </div>
+
+      <Card style={REPORT_CARD_STYLE} styles={{ body: { padding: 28 } }} loading={loading}>
+        <ReportSectionTitle>I. TÓM TẮT KẾT QUẢ BỘ TIÊU CHÍ CHẤT LƯỢNG BỆNH VIỆN</ReportSectionTitle>
+        <Row gutter={[24, 24]} style={{ marginBottom: 28 }}>
+          {summaryStatBlocks.map((block) => (
+            <Col key={block.label} xs={24} sm={12}>
+              <SummaryStatBlock label={block.label} value={block.value} tooltip={block.tooltip} />
+            </Col>
+          ))}
+        </Row>
 
         <Table
+          {...reportTableProps}
           columns={summaryLevelColumns}
           dataSource={summaryLevelData}
           pagination={false}
           rowKey="key"
-          bordered
-          style={{ marginBottom: 24 }}
+          style={{ marginBottom: 28 }}
         />
 
-        <Title level={5}>Biểu đồ 1. Phân bố tiêu chí theo mức</Title>
+        <ReportChartTitle>Biểu đồ 1. Phân bố tiêu chí theo mức</ReportChartTitle>
         <Column
           data={levelChartData}
           xField="level"
           yField="count"
-          height={280}
-          label={{ position: 'top' }}
-          color="#461901"
-          style={{ marginBottom: 24 }}
+          height={300}
+          scale={{ x: { padding: 0.35 } }}
+          label={{ position: 'top', style: { fill: '#434343', fontWeight: 500 } }}
+          color={CHART_COLOR_3}
+          style={columnChartStyle}
+          axis={{
+            x: { title: false, line: true, tick: true },
+            y: { title: false, grid: true, gridLineDash: [4, 4] },
+          }}
         />
       </Card>
 
-      <Card title="II. KẾT QUẢ THEO NHÓM TIÊU CHÍ" style={{ marginBottom: 16 }} loading={loading}>
+      <Card style={REPORT_CARD_STYLE} styles={{ body: { padding: 28 } }} loading={loading}>
+        <ReportSectionTitle>II. KẾT QUẢ THEO NHÓM TIÊU CHÍ</ReportSectionTitle>
         <Table
+          {...reportTableProps}
           columns={partColumns}
           dataSource={summary?.byPart || []}
           rowKey="part"
           pagination={false}
-          style={{ marginBottom: 24 }}
+          style={{ marginBottom: 28 }}
         />
-        <Title level={5}>Biểu đồ 2. Điểm trung bình theo nhóm tiêu chí</Title>
+        <ReportChartTitle>Biểu đồ 2. Điểm trung bình theo nhóm tiêu chí</ReportChartTitle>
         <Column
           data={partChartData}
           xField="label"
           yField="avgScore"
-          height={300}
-          scale={{ y: { domain: [0, 5], nice: false } }}
+          height={320}
+          scale={{ y: { domain: [0, 5], nice: false }, x: { padding: 0.35 } }}
           label={{
             text: (d) => Number(d.avgScore).toFixed(2),
             position: 'top',
+            style: { fill: '#434343', fontWeight: 500 },
           }}
-          style={{ fill: '#953d00' }}
+          color={CHART_COLOR_3}
+          style={columnChartStyle}
+          axis={{
+            x: { title: false, line: true, tick: true, labelAutoRotate: true },
+            y: { title: false, grid: true, gridLineDash: [4, 4] },
+          }}
         />
       </Card>
 
-      <Card
-        title="III. KẾT QUẢ THEO KHOA/PHÒNG PHỤ TRÁCH"
-        style={{ marginBottom: 16 }}
-        loading={loading}
-      >
+      <Card style={REPORT_CARD_STYLE} styles={{ body: { padding: 28 } }} loading={loading}>
+        <ReportSectionTitle>III. KẾT QUẢ THEO KHOA/PHÒNG PHỤ TRÁCH</ReportSectionTitle>
         <Table
+          {...reportTableProps}
           columns={departmentColumns}
           dataSource={summary?.byDepartment || []}
           rowKey={(r) => r.departmentId || r.name}
@@ -474,12 +662,10 @@ const Report = () => {
         />
       </Card>
 
-      <Card
-        title="IV. DANH SÁCH TIÊU CHÍ DƯỚI MỨC 3"
-        style={{ marginBottom: 16 }}
-        loading={loading}
-      >
+      <Card style={REPORT_CARD_STYLE} styles={{ body: { padding: 28 } }} loading={loading}>
+        <ReportSectionTitle>IV. DANH SÁCH TIÊU CHÍ DƯỚI MỨC 3</ReportSectionTitle>
         <Table
+          {...reportTableProps}
           columns={belowLevel3Columns}
           dataSource={belowLevel3}
           rowKey="_id"
@@ -487,34 +673,35 @@ const Report = () => {
         />
       </Card>
 
-      <Card
-        title="V. CÁC TIÊU CHÍ / TIỂU MỤC CHƯA ĐẠT KẾ HOẠCH"
-        style={{ marginBottom: 16 }}
-        loading={loading}
-      >
+      <Card style={REPORT_CARD_STYLE} styles={{ body: { padding: 28 } }} loading={loading}>
+        <ReportSectionTitle>V. CÁC TIÊU CHÍ CHƯA ĐẠT KẾ HOẠCH</ReportSectionTitle>
         <Table
-          columns={subcriteriaColumns}
-          dataSource={notAchievedSubcriteria}
-          rowKey={(r) => `${r.criteriaId}-${r.levelNumber}-${r.subIndex}`}
+          {...reportTableProps}
+          columns={belowLevel3Columns}
+          dataSource={notAchievedCriteriaList}
+          rowKey="_id"
           pagination={{ pageSize: 20 }}
         />
       </Card>
 
-      <Card
-        title="VI. KẾT QUẢ ĐÁNH GIÁ THEO BỘ TIÊU CHÍ"
-        style={{ marginBottom: 16 }}
-        loading={loading}
-      >
+      <Card style={REPORT_CARD_STYLE} styles={{ body: { padding: 28 } }} loading={loading}>
+        <ReportSectionTitle>VI. KẾT QUẢ ĐÁNH GIÁ THEO BỘ TIÊU CHÍ</ReportSectionTitle>
         <Table
+          {...reportTableProps}
           columns={matrixColumns}
           dataSource={matrix}
           rowKey="_id"
           pagination={{ pageSize: 50 }}
+          rowClassName={(record) =>
+            isCriteriaBelowExpectedLevel(record) ? 'report-matrix-below-plan' : ''
+          }
         />
       </Card>
 
-      <Card title="Báo cáo chi tiết (theo bộ lọc)" loading={loading}>
+      <Card style={REPORT_CARD_STYLE} styles={{ body: { padding: 28 } }} loading={loading}>
+        <ReportSectionTitle>Báo cáo chi tiết</ReportSectionTitle>
         <Table
+          {...reportTableProps}
           columns={detailColumns}
           dataSource={details}
           rowKey={(r) => r._id || r.code}
