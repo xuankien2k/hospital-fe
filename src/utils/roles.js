@@ -11,3 +11,5 @@ export const isContentAdmin = (role) => CONTENT_ADMIN_ROLES.includes(role);
 export const canManageUsers = (role) => isContentAdmin(role) || role === 'department';
 
 export const canManageUsersFully = (role) => isContentAdmin(role);
+
+export const canCreateCriteria = (role) => isContentAdmin(role) || role === 'department';

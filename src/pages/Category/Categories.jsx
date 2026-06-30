@@ -34,7 +34,7 @@ import {
   getCriteriaProgressStatus,
 } from '../../utils/criteriaProgress';
 import { canFilterByDepartment, getCriteriaDepartmentOptions } from '../../utils/departments';
-import { isContentAdmin } from '../../utils/roles';
+import { isContentAdmin, canCreateCriteria as roleCanCreateCriteria } from '../../utils/roles';
 import { isEmpty, map } from 'lodash';
 import dayjs from 'dayjs';
 
@@ -249,7 +249,9 @@ const Categories = () => {
   const { initialState } = useModel('@@initialState');
   const currentUser = initialState?.currentUser || parseStoredUser();
   const isCriteriaOfficer = currentUser?.role === 'criteria_officer';
+  const isDepartmentHead = currentUser?.role === 'department';
   const canAdminCriteria = isContentAdmin(currentUser?.role);
+  const canCreateCriteria = roleCanCreateCriteria(currentUser?.role);
   const showDepartmentFilter = canFilterByDepartment(currentUser?.role);
 
   // State declarations
@@ -277,6 +279,14 @@ const Categories = () => {
     () => getCriteriaDepartmentOptions(departments),
     [departments],
   );
+
+  const userDepartmentId = useMemo(() => {
+    const directId = currentUser?.departmentId?._id || currentUser?.departmentId;
+    if (directId) return directId;
+    const deptName = currentUser?.departmentId?.name || currentUser?.department;
+    if (!deptName) return undefined;
+    return departments.find((d) => d.name === deptName)?._id;
+  }, [currentUser, departments]);
 
   const derivedCurrentLevel = useMemo(() => deriveCurrentLevelFromLevels(levels), [levels]);
   const tableData = useMemo(() => buildTableDataWithGroupHeaders(data), [data]);
@@ -358,6 +368,9 @@ const Categories = () => {
       setAssignedUser();
       setExpectedLevelCompletionDate('');
       setLevels(defaultLevel);
+      if (isDepartmentHead && userDepartmentId) {
+        form.setFieldsValue({ departmentId: userDepartmentId });
+      }
     }
   };
 
@@ -382,7 +395,7 @@ const Categories = () => {
         list();
       }
     } catch (error) {
-      message.error('Error adding user:', 5);
+      message.error(error?.response?.data?.message || 'Không thể thêm tiêu chí');
     }
   };
 
@@ -775,7 +788,13 @@ const Categories = () => {
           label="Khoa/Phòng"
           rules={[{ required: true, message: 'Chọn khoa/phòng' }]}
         >
-          <Select size="large" placeholder="Chọn khoa/phòng" showSearch optionFilterProp="children">
+          <Select
+            size="large"
+            placeholder="Chọn khoa/phòng"
+            showSearch
+            optionFilterProp="children"
+            disabled={isDepartmentHead}
+          >
             {criteriaDepartmentOptions.map((dept) => (
               <Option key={dept._id} value={dept._id}>
                 {dept.name}
@@ -1017,7 +1036,7 @@ const Categories = () => {
         <Button size="large" type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
           Tìm kiếm
         </Button>
-        {canAdminCriteria && (
+        {canCreateCriteria && (
           <Button
             size="large"
             type="primary"
