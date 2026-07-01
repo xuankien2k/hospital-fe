@@ -36,6 +36,7 @@ import {
 import { canFilterByDepartment, getCriteriaDepartmentOptions } from '../../utils/departments';
 import { isContentAdmin, canCreateCriteria as roleCanCreateCriteria } from '../../utils/roles';
 import { LEVEL_COLORS, getLevelColorStyle } from '../../utils/criteriaLevelColors';
+import { BRAND_COLOR } from '../../utils/brandColors';
 import { isEmpty, map } from 'lodash';
 import dayjs from 'dayjs';
 
@@ -110,8 +111,8 @@ const CRITERIA_MODAL_BUTTON_STYLES = `
 
   .criteria-btn-add-subitem.ant-btn:not(:disabled):hover,
   .criteria-btn-add-subitem.ant-btn:not(:disabled):focus {
-    background: #1677ff !important;
-    border-color: #1677ff !important;
+    background: ${BRAND_COLOR} !important;
+    border-color: ${BRAND_COLOR} !important;
     color: #ffffff !important;
   }
 `;
@@ -1052,13 +1053,13 @@ const Categories = () => {
           padding-bottom: 8px !important;
         }
         .criteria-chapter-header-cell {
-          border-left: 4px solid #1677ff !important;
+          border-left: 4px solid ${BRAND_COLOR} !important;
           border-bottom: 1px solid #eef4ff !important;
         }
         .criteria-chapter-header {
           font-weight: 600;
           font-size: 13px;
-          color: #1677ff;
+          color: ${BRAND_COLOR};
           padding-left: 12px;
         }
       `}</style>

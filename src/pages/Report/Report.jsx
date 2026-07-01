@@ -15,6 +15,7 @@ import {
 import { canFilterByDepartment } from '../../utils/departments';
 import { isContentAdmin } from '../../utils/roles';
 import { getLevelColorStyle } from '../../utils/criteriaLevelColors';
+import { BRAND_COLOR, BRAND_COLOR_LIGHT_BG } from '../../utils/brandColors';
 
 const { Title, Text } = Typography;
 
@@ -615,8 +616,8 @@ const ReportSectionTitle = ({ children }) => (
 );
 
 const SUMMARY_STAT_THEME = {
-  accent: '#1677ff',
-  bg: '#e6f4ff',
+  accent: BRAND_COLOR,
+  bg: BRAND_COLOR_LIGHT_BG,
 };
 
 const SummaryStatBlock = ({ label, value, tooltip, accent, background }) => (

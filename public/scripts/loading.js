@@ -43,7 +43,7 @@
           margin: 0;
           padding: 0;
           color: rgba(0, 0, 0, 0.65);
-          color: #1890ff;
+          color: #3A4AFF;
           font-size: 14px;
           font-variant: tabular-nums;
           line-height: 1.5;
@@ -80,7 +80,7 @@
           display: block;
           width: 9px;
           height: 9px;
-          background-color: #1890ff;
+          background-color: #3A4AFF;
           border-radius: 100%;
           -webkit-transform: scale(0.75);
           -ms-transform: scale(0.75);
