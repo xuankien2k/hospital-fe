@@ -35,6 +35,7 @@ import {
 } from '../../utils/criteriaProgress';
 import { canFilterByDepartment, getCriteriaDepartmentOptions } from '../../utils/departments';
 import { isContentAdmin, canCreateCriteria as roleCanCreateCriteria } from '../../utils/roles';
+import { LEVEL_COLORS, getLevelColorStyle } from '../../utils/criteriaLevelColors';
 import { isEmpty, map } from 'lodash';
 import dayjs from 'dayjs';
 
@@ -42,14 +43,6 @@ const { TextArea } = Input;
 const { Option } = Select;
 const { Panel } = Collapse;
 const { Paragraph } = Typography;
-
-const LEVEL_COLORS = {
-  1: { bg: '#461901', color: '#ffffff' },
-  2: { bg: '#953d00', color: '#ffffff' },
-  3: { bg: '#dd7400', color: '#ffffff' },
-  4: { bg: '#fcbb00', color: '#ffffff' },
-  5: { bg: '#fee685', color: '#000000' },
-};
 
 const CRITERIA_LEVEL_COLLAPSE_STYLES = `
   .criteria-level-panel .ant-collapse-header {
@@ -76,16 +69,58 @@ const CRITERIA_LEVEL_COLLAPSE_STYLES = `
   }
 `;
 
+const CRITERIA_MODAL_BUTTON_STYLES = `
+  .criteria-btn-delete.ant-btn {
+    background: #fee2e2;
+    border-color: #fee2e2;
+    color: #ef4444;
+    border-radius: 6px;
+    box-shadow: none;
+  }
+
+  .criteria-btn-delete.ant-btn:not(:disabled):hover,
+  .criteria-btn-delete.ant-btn:not(:disabled):focus {
+    background: #ef4444 !important;
+    border-color: #ef4444 !important;
+    color: #ffffff !important;
+  }
+
+  .criteria-btn-evidence.ant-btn {
+    background: #e0e7ff;
+    border-color: #e0e7ff;
+    color: #4f46e5;
+    border-radius: 6px;
+    box-shadow: none;
+  }
+
+  .criteria-btn-evidence.ant-btn:not(:disabled):hover,
+  .criteria-btn-evidence.ant-btn:not(:disabled):focus {
+    background: #c7d2fe !important;
+    border-color: #c7d2fe !important;
+    color: #4338ca !important;
+  }
+
+  .criteria-btn-add-subitem.ant-btn {
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    color: #4b5563;
+    border-radius: 8px;
+    box-shadow: none;
+  }
+
+  .criteria-btn-add-subitem.ant-btn:not(:disabled):hover,
+  .criteria-btn-add-subitem.ant-btn:not(:disabled):focus {
+    background: #1677ff !important;
+    border-color: #1677ff !important;
+    color: #ffffff !important;
+  }
+`;
+
 const getCurrentLevelValue = (record) => {
   const val = record?.currentLevel;
   if (val === undefined || val === null || val === 0) return 1;
   const num = Number(val);
   return Number.isFinite(num) ? num : 1;
-};
-
-const getLevelColorStyle = (level) => {
-  const lvl = Math.min(5, Math.max(1, Number(level) || 1));
-  return LEVEL_COLORS[lvl] || LEVEL_COLORS[1];
 };
 
 const parseStoredUser = () => {
@@ -749,7 +784,10 @@ const Categories = () => {
   const listLevels = [1, 2, 3, 4, 5];
   const renderCriteriaForm = (isOfficerUpdate = false) => (
     <Form form={form} layout="vertical">
-      <style>{CRITERIA_LEVEL_COLLAPSE_STYLES}</style>
+      <style>
+        {CRITERIA_LEVEL_COLLAPSE_STYLES}
+        {CRITERIA_MODAL_BUTTON_STYLES}
+      </style>
       <Space direction="horizontal">
         <Form.Item
           name="part"
@@ -918,7 +956,7 @@ const Categories = () => {
                         />
                         <Button
                           size="small"
-                          type="primary"
+                          className="criteria-btn-evidence"
                           onClick={() => openEvidenceModal(level, index)}
                         >
                           <PlusOutlined /> Minh chứng
@@ -926,7 +964,7 @@ const Categories = () => {
                         {!isOfficerUpdate && (
                           <Button
                             size="small"
-                            type="primary"
+                            className="criteria-btn-delete"
                             onClick={() => handleDeleteSubItem(level, index)}
                           >
                             <DeleteOutlined /> Xóa
@@ -972,7 +1010,7 @@ const Categories = () => {
                 })}
               </div>
 
-              <Button type="dashed" onClick={() => handleAddSubItem(level)}>
+              <Button className="criteria-btn-add-subitem" onClick={() => handleAddSubItem(level)}>
                 + Thêm tiểu mục
               </Button>
             </Panel>

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useModel } from '@umijs/max';
 import { Table, Card, message, Tag, Progress, Typography, Row, Col, Tooltip, Button } from 'antd';
-import { Column } from '@ant-design/plots';
 import { InfoCircleOutlined, DownloadOutlined } from '@ant-design/icons';
 import axiosInstance from '../../utils/axiosInstance';
 import dayjs from 'dayjs';
@@ -14,10 +13,374 @@ import {
 } from '../../utils/criteriaProgress';
 import { canFilterByDepartment } from '../../utils/departments';
 import { isContentAdmin } from '../../utils/roles';
+import { getLevelColorStyle, getLevelNumberFromLabel } from '../../utils/criteriaLevelColors';
 
 const { Title, Text } = Typography;
 
-const CHART_COLOR_3 = '#8879DF';
+const SHOW_SECTION_I_II_TABLES = false;
+
+const PART_LEVELS = [1, 2, 3, 4, 5];
+
+const LevelLegend = () => (
+  <div
+    style={{
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: '10px 20px',
+      marginTop: 16,
+      paddingTop: 12,
+      borderTop: '1px solid #f0f0f0',
+    }}
+  >
+    {PART_LEVELS.map((level) => {
+      const levelStyle = getLevelColorStyle(level);
+      return (
+        <div
+          key={level}
+          style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#595959' }}
+        >
+          <span
+            style={{
+              width: 12,
+              height: 12,
+              backgroundColor: levelStyle.bg,
+              flexShrink: 0,
+            }}
+          />
+          <span>{`Mức ${level}`}</span>
+        </div>
+      );
+    })}
+  </div>
+);
+
+const PartGroupLevelStackedChart = ({ data }) => {
+  const rows = useMemo(
+    () =>
+      (data || []).map((item) => ({
+        ...item,
+        displayLabel: `${item.part}. ${item.label}`,
+        count: Number(item.count) || 0,
+        avgScore: Number(item.avgScore) || 0,
+        levelCounts: PART_LEVELS.map((level) => ({
+          level,
+          levelLabel: `Mức ${level}`,
+          count: Number(item.byLevel?.[`level${level}`]) || 0,
+          ...getLevelColorStyle(level),
+        })),
+      })),
+    [data],
+  );
+
+  const maxCount = useMemo(() => Math.max(1, ...rows.map((row) => row.count)), [rows]);
+
+  const renderRowTooltip = (row) => (
+    <div>
+      <div style={{ fontWeight: 600, marginBottom: 8 }}>{row.displayLabel}</div>
+      {row.levelCounts
+        .filter((segment) => segment.count > 0)
+        .map((segment) => (
+          <div key={segment.level}>
+            {segment.levelLabel}: {segment.count} tiêu chí
+          </div>
+        ))}
+      <div style={{ marginTop: 8, fontWeight: 600 }}>
+        Điểm trung bình: {row.avgScore.toFixed(2)}
+      </div>
+    </div>
+  );
+
+  if (!rows.length) {
+    return (
+      <div
+        style={{
+          padding: '32px 16px',
+          textAlign: 'center',
+          color: '#8c8c8c',
+          background: '#fafafa',
+          borderRadius: 8,
+        }}
+      >
+        Chưa có dữ liệu theo nhóm tiêu chí
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ marginBottom: 8 }}>
+      {rows.map((row) => (
+        <div
+          key={row.part}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            marginBottom: 14,
+          }}
+        >
+          <div
+            style={{
+              width: 220,
+              flexShrink: 0,
+              fontSize: 13,
+              color: '#434343',
+              lineHeight: 1.35,
+            }}
+          >
+            {row.displayLabel}
+          </div>
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <div
+              style={{ flex: 1, minWidth: 0, height: 50, display: 'flex', alignItems: 'center' }}
+            >
+              {row.count > 0 ? (
+                <Tooltip title={renderRowTooltip(row)} styles={{ root: { width: '100%' } }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      width: `${(row.count / maxCount) * 100}%`,
+                      minWidth: 28,
+                      height: '100%',
+                      borderRadius: '0 4px 4px 0',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {row.levelCounts.map((segment) => {
+                      if (!segment.count) return null;
+                      const widthPercent = (segment.count / row.count) * 100;
+                      return (
+                        <div
+                          key={segment.level}
+                          style={{
+                            width: `${widthPercent}%`,
+                            backgroundColor: segment.bg,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            minWidth: widthPercent >= 4 ? undefined : 2,
+                            height: '100%',
+                          }}
+                        >
+                          {widthPercent >= 14 ? (
+                            <span style={{ color: segment.color, fontSize: 12, fontWeight: 600 }}>
+                              {segment.count}
+                            </span>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Tooltip>
+              ) : (
+                <Text type="secondary" style={{ fontSize: 13 }}>
+                  Không có tiêu chí
+                </Text>
+              )}
+            </div>
+            <div
+              style={{
+                width: 40,
+                flexShrink: 0,
+                textAlign: 'right',
+                fontWeight: 600,
+                fontSize: 13,
+                color: '#141414',
+              }}
+            >
+              {row.count}
+            </div>
+          </div>
+        </div>
+      ))}
+      <div
+        style={{
+          marginLeft: 232,
+          marginTop: 4,
+          paddingTop: 8,
+          borderTop: '1px solid #e8e8e8',
+          display: 'flex',
+          justifyContent: 'space-between',
+          fontSize: 11,
+          color: '#8c8c8c',
+        }}
+      >
+        <span>0</span>
+        <span>{Math.round(maxCount / 2)}</span>
+        <span>{maxCount}</span>
+      </div>
+      <LevelLegend />
+    </div>
+  );
+};
+
+const LevelDistributionStackedBar = ({ data, total }) => {
+  const segments = useMemo(() => {
+    const safeTotal = Number(total) || 0;
+    return data.map((item) => {
+      const count = Number(item.count) || 0;
+      const percent = safeTotal ? (count / safeTotal) * 100 : 0;
+      return {
+        ...item,
+        count,
+        percent,
+        label: `${Math.round(percent)}%`,
+      };
+    });
+  }, [data, total]);
+
+  const hasData = segments.some((item) => item.count > 0);
+  const totalApplied = Number(total) || 0;
+
+  const renderSegmentTooltip = (segment) => (
+    <div>
+      <div style={{ fontWeight: 600 }}>{segment.level}</div>
+      <div>{segment.count} tiêu chí đang đạt</div>
+    </div>
+  );
+
+  return (
+    <div style={{ marginBottom: 8 }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'stretch',
+          gap: 24,
+          marginBottom: 16,
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              display: 'flex',
+              width: '100%',
+              height: 50,
+              borderRadius: 4,
+              overflow: 'hidden',
+              background: hasData ? 'transparent' : '#f0f0f0',
+            }}
+          >
+            {hasData ? (
+              segments.map((segment) => {
+                if (segment.percent <= 0) return null;
+                const levelStyle = getLevelColorStyle(getLevelNumberFromLabel(segment.level));
+                return (
+                  <div
+                    key={segment.level}
+                    style={{
+                      width: `${segment.percent}%`,
+                      minWidth: segment.percent >= 4 ? undefined : 2,
+                      height: '100%',
+                      display: 'flex',
+                    }}
+                  >
+                    <Tooltip
+                      title={renderSegmentTooltip(segment)}
+                      styles={{ root: { width: '100%' } }}
+                    >
+                      <div
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          backgroundColor: levelStyle.bg,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {segment.percent >= 8 ? (
+                          <span style={{ color: levelStyle.color, fontSize: 12, fontWeight: 600 }}>
+                            {segment.label}
+                          </span>
+                        ) : null}
+                      </div>
+                    </Tooltip>
+                  </div>
+                );
+              })
+            ) : (
+              <div
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#8c8c8c',
+                  fontSize: 13,
+                }}
+              >
+                Chưa có dữ liệu phân bố theo mức
+              </div>
+            )}
+          </div>
+        </div>
+        <div
+          style={{
+            flexShrink: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingLeft: 24,
+            borderLeft: '1px dashed #d9d9d9',
+            minWidth: 132,
+          }}
+        >
+          <div style={{ fontSize: 28, fontWeight: 700, color: '#141414', lineHeight: 1.2 }}>
+            {totalApplied}
+          </div>
+          <Text type="secondary" style={{ fontSize: 12, textAlign: 'center', marginTop: 4 }}>
+            Tiêu chí áp dụng
+          </Text>
+        </div>
+      </div>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+          gap: '10px 20px',
+          marginTop: 16,
+        }}
+      >
+        {segments.map((segment) => {
+          const levelStyle = getLevelColorStyle(getLevelNumberFromLabel(segment.level));
+          return (
+            <div
+              key={segment.level}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: 13,
+                color: '#595959',
+              }}
+            >
+              <span
+                style={{
+                  width: 12,
+                  height: 12,
+                  backgroundColor: levelStyle.bg,
+                  flexShrink: 0,
+                }}
+              />
+              <span>{segment.level}</span>
+              <span style={{ fontWeight: 500 }}>{segment.label}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 const SECTION_GAP = 32;
 const SECTION_TITLE_STYLE = {
   margin: 0,
@@ -42,24 +405,6 @@ const REPORT_CARD_STYLE = {
 };
 const REPORT_TABLE_CLASS = 'report-quality-table';
 
-const buildChartYMax = (data, field, floor = 5) => {
-  const max = Math.max(0, ...data.map((item) => Number(item[field]) || 0));
-  if (max === 0) return floor;
-  return Math.max(floor, Math.ceil(max * 1.12));
-};
-
-const reportColumnStyle = {
-  fill: CHART_COLOR_3,
-  radiusTopLeft: 6,
-  radiusTopRight: 6,
-  maxWidth: 56,
-};
-
-const reportColumnAxis = {
-  x: { title: false, line: true, tick: true },
-  y: { title: false, grid: true, gridLineDash: [4, 4] },
-};
-
 const ReportSectionTitle = ({ children }) => (
   <Title level={4} style={SECTION_TITLE_STYLE}>
     {children}
@@ -72,26 +417,54 @@ const ReportChartTitle = ({ children }) => (
   </Title>
 );
 
-const SummaryStatBlock = ({ label, value, tooltip }) => (
+const SUMMARY_STAT_THEMES = [
+  { accent: '#8879DF', bg: 'linear-gradient(135deg, #f3f0ff 0%, #ffffff 70%)' },
+  { accent: '#1677ff', bg: 'linear-gradient(135deg, #e6f4ff 0%, #ffffff 70%)' },
+  { accent: '#389e0d', bg: 'linear-gradient(135deg, #f6ffed 0%, #ffffff 70%)' },
+  { accent: '#d48806', bg: 'linear-gradient(135deg, #fffbe6 0%, #ffffff 70%)' },
+];
+
+const SummaryStatBlock = ({ label, value, tooltip, accent, background }) => (
   <div
     style={{
-      background: '#fff',
-      border: '1px solid #e8e8e8',
+      background: background || '#fff',
+      border: `1px solid ${accent}33`,
+      borderTop: `3px solid ${accent}`,
       borderRadius: 12,
-      padding: '22px 24px',
-      minHeight: 108,
-      boxShadow: '0 1px 4px rgba(0, 0, 0, 0.04)',
+      padding: '20px 22px',
+      minHeight: 118,
+      height: '100%',
+      boxShadow: `0 6px 20px ${accent}1f`,
+      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+    }}
+    onMouseEnter={(event) => {
+      event.currentTarget.style.transform = 'translateY(-2px)';
+      event.currentTarget.style.boxShadow = `0 10px 24px ${accent}2e`;
+    }}
+    onMouseLeave={(event) => {
+      event.currentTarget.style.transform = 'translateY(0)';
+      event.currentTarget.style.boxShadow = `0 6px 20px ${accent}1f`;
     }}
   >
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-      <Text type="secondary" style={{ fontSize: 14, lineHeight: 1.4 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+      <Text style={{ fontSize: 13, fontWeight: 600, color: '#595959', lineHeight: 1.4 }}>
         {label}
       </Text>
       <Tooltip title={tooltip}>
-        <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: 14, cursor: 'help' }} />
+        <InfoCircleOutlined style={{ color: accent, fontSize: 14, cursor: 'help' }} />
       </Tooltip>
     </div>
-    <div style={{ fontSize: 32, fontWeight: 700, color: '#141414', lineHeight: 1.2 }}>{value}</div>
+    <div
+      style={{
+        fontSize: 34,
+        fontWeight: 700,
+        color: accent,
+        lineHeight: 1.15,
+        letterSpacing: '-0.02em',
+      }}
+    >
+      {value}
+    </div>
   </div>
 );
 
@@ -276,12 +649,38 @@ const Report = () => {
     { level: 'Mức 5', count: byLevel.level5 },
   ];
 
-  const partChartData = (summary?.byPart || []).map((p) => ({
-    label: `${p.part}. ${p.label}`,
-    avgScore: Number(Number(p.avgScore).toFixed(2)),
-  }));
+  const partStackedChartData = useMemo(() => {
+    const byPart = summary?.byPart || [];
+    if (!byPart.length) return [];
 
-  const levelChartYMax = buildChartYMax(levelChartData, 'count', 5);
+    const levelByPart = {};
+    details.forEach((criteria) => {
+      const part = String(criteria.part || '')
+        .trim()
+        .charAt(0)
+        .toUpperCase();
+      if (!part) return;
+      if (!levelByPart[part]) {
+        levelByPart[part] = { level1: 0, level2: 0, level3: 0, level4: 0, level5: 0 };
+      }
+      const currentLevel = getCriteriaCurrentLevel(criteria);
+      if (currentLevel >= 1 && currentLevel <= 5) {
+        levelByPart[part][`level${currentLevel}`] += 1;
+      }
+    });
+
+    return byPart.map((partRow) => ({
+      ...partRow,
+      byLevel: partRow.byLevel ||
+        levelByPart[partRow.part] || {
+          level1: 0,
+          level2: 0,
+          level3: 0,
+          level4: 0,
+          level5: 0,
+        },
+    }));
+  }, [summary?.byPart, details]);
 
   const notAchievedCriteriaList = useMemo(() => {
     const source = matrix.length ? matrix : details;
@@ -304,21 +703,25 @@ const Report = () => {
       label: 'Tiêu chí áp dụng',
       value: `${totalApplied}/${totalStandard}`,
       tooltip: `Tổng số tiêu chí được áp dụng đánh giá trên bộ chuẩn ${totalStandard} tiêu chí. Không đánh giá ${excludedCodesText}.`,
+      ...SUMMARY_STAT_THEMES[0],
     },
     {
       label: 'Tỷ lệ áp dụng',
       value: `${summary?.appliedPercent?.toFixed(0) || 0}%`,
       tooltip: `Tỷ lệ tiêu chí áp dụng = ${totalApplied}/${totalStandard} tiêu chí chuẩn.`,
+      ...SUMMARY_STAT_THEMES[1],
     },
     {
       label: 'Tổng điểm',
       value: summary?.totalWeightedScore || 0,
       tooltip: `Tổng điểm có hệ số chương (C3/C5 nhân 2). Hệ số: ${summary?.totalWeight || 0}.`,
+      ...SUMMARY_STAT_THEMES[2],
     },
     {
       label: 'Điểm trung bình',
       value: summary?.overallScore?.toFixed(2) || '0.00',
       tooltip: 'Điểm trung bình chung các tiêu chí được áp dụng đánh giá.',
+      ...SUMMARY_STAT_THEMES[3],
     },
   ];
 
@@ -599,76 +1002,49 @@ const Report = () => {
 
       <Card style={REPORT_CARD_STYLE} styles={{ body: { padding: 28 } }} loading={loading}>
         <ReportSectionTitle>I. TÓM TẮT KẾT QUẢ BỘ TIÊU CHÍ CHẤT LƯỢNG BỆNH VIỆN</ReportSectionTitle>
-        <Row gutter={[24, 24]} style={{ marginBottom: 28 }}>
+        <Row gutter={[16, 16]} style={{ marginBottom: 28 }}>
           {summaryStatBlocks.map((block) => (
-            <Col key={block.label} xs={24} sm={12}>
-              <SummaryStatBlock label={block.label} value={block.value} tooltip={block.tooltip} />
+            <Col key={block.label} xs={24} sm={12} md={6}>
+              <SummaryStatBlock
+                label={block.label}
+                value={block.value}
+                tooltip={block.tooltip}
+                accent={block.accent}
+                background={block.bg}
+              />
             </Col>
           ))}
         </Row>
 
-        <Table
-          {...reportTableProps}
-          columns={summaryLevelColumns}
-          dataSource={summaryLevelData}
-          pagination={false}
-          rowKey="key"
-          style={{ marginBottom: 28 }}
-        />
+        {SHOW_SECTION_I_II_TABLES && (
+          <Table
+            {...reportTableProps}
+            columns={summaryLevelColumns}
+            dataSource={summaryLevelData}
+            pagination={false}
+            rowKey="key"
+            style={{ marginBottom: 28 }}
+          />
+        )}
 
         <ReportChartTitle>Biểu đồ 1. Phân bố tiêu chí theo mức</ReportChartTitle>
-        <Column
-          data={levelChartData}
-          xField="level"
-          yField="count"
-          height={300}
-          scale={{
-            y: { domain: [0, levelChartYMax], nice: false },
-            x: { padding: 0.4 },
-          }}
-          label={{
-            position: 'top',
-            offset: 4,
-            style: { fill: '#595959', fontWeight: 500, fontSize: 12 },
-          }}
-          color={CHART_COLOR_3}
-          style={reportColumnStyle}
-          axis={reportColumnAxis}
-        />
+        <LevelDistributionStackedBar data={levelChartData} total={totalApplied} />
       </Card>
 
       <Card style={REPORT_CARD_STYLE} styles={{ body: { padding: 28 } }} loading={loading}>
         <ReportSectionTitle>II. KẾT QUẢ THEO NHÓM TIÊU CHÍ</ReportSectionTitle>
-        <Table
-          {...reportTableProps}
-          columns={partColumns}
-          dataSource={summary?.byPart || []}
-          rowKey="part"
-          pagination={false}
-          style={{ marginBottom: 28 }}
-        />
+        {SHOW_SECTION_I_II_TABLES && (
+          <Table
+            {...reportTableProps}
+            columns={partColumns}
+            dataSource={summary?.byPart || []}
+            rowKey="part"
+            pagination={false}
+            style={{ marginBottom: 28 }}
+          />
+        )}
         <ReportChartTitle>Biểu đồ 2. Điểm trung bình theo nhóm tiêu chí</ReportChartTitle>
-        <Column
-          data={partChartData}
-          xField="label"
-          yField="avgScore"
-          height={320}
-          scale={{
-            y: { domain: [0, 5], nice: false },
-            x: { padding: 0.4 },
-          }}
-          label={{
-            position: 'top',
-            offset: 4,
-            style: { fill: '#595959', fontWeight: 500, fontSize: 12 },
-          }}
-          color={CHART_COLOR_3}
-          style={reportColumnStyle}
-          axis={{
-            ...reportColumnAxis,
-            x: { ...reportColumnAxis.x, labelAutoRotate: partChartData.length > 3 },
-          }}
-        />
+        <PartGroupLevelStackedChart data={partStackedChartData} />
       </Card>
 
       <Card style={REPORT_CARD_STYLE} styles={{ body: { padding: 28 } }} loading={loading}>
