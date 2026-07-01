@@ -21,6 +21,7 @@ import { BRAND_COLOR, BRAND_COLOR_LIGHT_BG } from '../../utils/brandColors';
 const { Title, Text } = Typography;
 
 const SHOW_SECTION_I_II_TABLES = false;
+const SHOW_SECTION_III_TABLE = false;
 
 const PART_LEVELS = [1, 2, 3, 4, 5];
 const DEPT_SCORE_MAX = 5;
@@ -1343,14 +1344,16 @@ const Report = () => {
 
       <Card style={REPORT_CARD_STYLE} styles={{ body: { padding: 28 } }} loading={loading}>
         <ReportSectionTitle>III. KẾT QUẢ THEO KHOA/PHÒNG PHỤ TRÁCH</ReportSectionTitle>
-        <Table
-          {...reportTableProps}
-          columns={departmentColumns}
-          dataSource={summary?.byDepartment || []}
-          rowKey={(r) => r.departmentId || r.name}
-          pagination={false}
-          style={{ marginBottom: 28 }}
-        />
+        {SHOW_SECTION_III_TABLE && (
+          <Table
+            {...reportTableProps}
+            columns={departmentColumns}
+            dataSource={summary?.byDepartment || []}
+            rowKey={(r) => r.departmentId || r.name}
+            pagination={false}
+            style={{ marginBottom: 28 }}
+          />
+        )}
         <ReportChartPanel
           title="Biểu đồ 3. Xếp hạng và điểm trung bình theo khoa/phòng"
           description="Thứ tự xếp hạng và điểm trung bình là thông tin chính; số tiêu chí phụ trách hiển thị phụ bên phải"
