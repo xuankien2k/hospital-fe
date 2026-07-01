@@ -3,7 +3,7 @@ import axiosInstance from '../../../utils/axiosInstance';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { LoginForm, ProFormCheckbox, ProFormText } from '@ant-design/pro-components';
 import { Helmet, history, useIntl, useModel } from '@umijs/max';
-import { Alert, message } from 'antd';
+import { Alert, Modal, message } from 'antd';
 import { createStyles } from 'antd-style';
 import React, { useState } from 'react';
 import { flushSync } from 'react-dom';
@@ -82,6 +82,16 @@ const Login: React.FC = () => {
     }
   };
 
+  const handleForgotPassword = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    Modal.info({
+      title: 'Quên mật khẩu',
+      content: 'Liên hệ với Admin hoặc khoa/phòng QLCLBV để xin cấp lại mật khẩu',
+      okText: 'Đã hiểu',
+      centered: true,
+    });
+  };
+
   const { status, type: loginType } = userLoginState;
 
   return (
@@ -157,7 +167,9 @@ const Login: React.FC = () => {
             <ProFormCheckbox noStyle name="autoLogin">
               Ghi nhớ đăng nhập
             </ProFormCheckbox>
-            <a style={{ float: 'right' }}>Quên mật khẩu</a>
+            <a style={{ float: 'right' }} onClick={handleForgotPassword}>
+              Quên mật khẩu
+            </a>
           </div>
         </LoginForm>
       </div>

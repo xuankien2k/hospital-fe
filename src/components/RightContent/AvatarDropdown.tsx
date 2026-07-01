@@ -1,17 +1,30 @@
-import { LogoutOutlined, SettingOutlined, UserOutlined, CrownOutlined } from '@ant-design/icons';
+import {
+  LockOutlined,
+  LogoutOutlined,
+  SettingOutlined,
+  UserOutlined,
+  CrownOutlined,
+} from '@ant-design/icons';
 import { history, useModel } from '@umijs/max';
-import { Spin } from 'antd';
+import { Form, Input, Modal, Spin, message } from 'antd';
 import type { MenuProps } from 'antd';
 import { createStyles } from 'antd-style';
 import { stringify } from 'querystring';
-import React from 'react';
+import React, { useState } from 'react';
 import { flushSync } from 'react-dom';
 import HeaderDropdown from '../HeaderDropdown';
+import axiosInstance from '../../utils/axiosInstance';
 import { isSystemAdmin } from '../../utils/roles';
 
 export type GlobalHeaderRightProps = {
   menu?: boolean;
   children?: React.ReactNode;
+};
+
+type ChangePasswordForm = {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
 };
 
 export const AvatarName = () => {
@@ -47,9 +60,10 @@ const useStyles = createStyles(({ token }) => {
 });
 
 export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, children }) => {
-  /**
-   * 退出登录，并且将当前的 url 保存
-   */
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [form] = Form.useForm<ChangePasswordForm>();
+
   const loginOut = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('currentUser');
@@ -68,8 +82,27 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
 
   const { initialState, setInitialState } = useModel('@@initialState');
 
+  const handleChangePassword = async (values: ChangePasswordForm) => {
+    try {
+      setSubmitting(true);
+      await axiosInstance.post('/api/users/change-password', values);
+      message.success('Đổi mật khẩu thành công');
+      form.resetFields();
+      setChangePasswordOpen(false);
+    } catch (error: any) {
+      message.error(error?.response?.data?.message || error?.message || 'Không đổi được mật khẩu');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const onMenuClick: MenuProps['onClick'] = (event) => {
     const { key } = event;
+    if (key === 'change-password') {
+      form.resetFields();
+      setChangePasswordOpen(true);
+      return;
+    }
     if (key === 'logout') {
       flushSync(() => {
         setInitialState((s) => ({ ...s, currentUser: undefined }));
@@ -121,6 +154,11 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
         ]
       : []),
     {
+      key: 'change-password',
+      icon: <LockOutlined />,
+      label: 'Đổi mật khẩu',
+    },
+    {
       key: 'logout',
       icon: <LogoutOutlined />,
       label: 'Đăng xuất',
@@ -128,14 +166,66 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
   ];
 
   return (
-    <HeaderDropdown
-      menu={{
-        selectedKeys: [],
-        onClick: onMenuClick,
-        items: menuItems,
-      }}
-    >
-      {children}
-    </HeaderDropdown>
+    <>
+      <HeaderDropdown
+        menu={{
+          selectedKeys: [],
+          onClick: onMenuClick,
+          items: menuItems,
+        }}
+      >
+        {children}
+      </HeaderDropdown>
+      <Modal
+        title="Đổi mật khẩu"
+        open={changePasswordOpen}
+        onCancel={() => {
+          if (!submitting) {
+            setChangePasswordOpen(false);
+            form.resetFields();
+          }
+        }}
+        onOk={() => form.submit()}
+        okText="Lưu"
+        cancelText="Hủy"
+        confirmLoading={submitting}
+        destroyOnClose
+      >
+        <Form form={form} layout="vertical" onFinish={handleChangePassword}>
+          <Form.Item
+            name="currentPassword"
+            label="Mật khẩu hiện tại"
+            rules={[{ required: true, message: 'Vui lòng nhập mật khẩu hiện tại' }]}
+          >
+            <Input.Password size="large" placeholder="Nhập mật khẩu hiện tại" />
+          </Form.Item>
+          <Form.Item
+            name="newPassword"
+            label="Mật khẩu mới"
+            rules={[{ required: true, message: 'Vui lòng nhập mật khẩu mới' }]}
+          >
+            <Input.Password size="large" placeholder="Nhập mật khẩu mới" />
+          </Form.Item>
+          <Form.Item
+            name="confirmPassword"
+            label="Xác nhận mật khẩu mới"
+            dependencies={['newPassword']}
+            rules={[
+              { required: true, message: 'Vui lòng xác nhận mật khẩu mới' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue('newPassword') === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error('Mật khẩu mới không khớp'));
+                },
+              }),
+            ]}
+          >
+            <Input.Password size="large" placeholder="Nhập lại mật khẩu mới" />
+          </Form.Item>
+        </Form>
+      </Modal>
+    </>
   );
 };
