@@ -66,8 +66,7 @@ const Login: React.FC = () => {
         localStorage.setItem('token', response.data.token);
         await fetchUserInfo();
 
-        const urlParams = new URL(window.location.href).searchParams;
-        history.push(urlParams.get('redirect') || '/');
+        history.push('/Category');
         return;
       }
 
