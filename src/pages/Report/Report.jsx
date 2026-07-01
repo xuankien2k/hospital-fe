@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useModel } from '@umijs/max';
 import { Table, Card, message, Tag, Progress, Typography, Row, Col, Tooltip, Button } from 'antd';
 import { InfoCircleOutlined, DownloadOutlined } from '@ant-design/icons';
+import { DualAxes, Pie } from '@ant-design/plots';
 import axiosInstance from '../../utils/axiosInstance';
 import dayjs from 'dayjs';
 import {
@@ -13,13 +14,184 @@ import {
 } from '../../utils/criteriaProgress';
 import { canFilterByDepartment } from '../../utils/departments';
 import { isContentAdmin } from '../../utils/roles';
-import { getLevelColorStyle, getLevelNumberFromLabel } from '../../utils/criteriaLevelColors';
+import { getLevelColorStyle } from '../../utils/criteriaLevelColors';
 
 const { Title, Text } = Typography;
 
 const SHOW_SECTION_I_II_TABLES = false;
 
 const PART_LEVELS = [1, 2, 3, 4, 5];
+const DEPT_CHART_COLUMN_COLOR = '#9857de';
+const DEPT_CHART_LINE_COLOR = '#532387';
+
+const buildCountYMax = (data) => {
+  const max = Math.max(0, ...data.map((item) => Number(item.count) || 0));
+  if (max === 0) return 5;
+  return Math.max(5, Math.ceil(max * 1.15));
+};
+
+const DepartmentComboChart = ({ data }) => {
+  const chartData = useMemo(
+    () =>
+      (data || []).map((item) => ({
+        name: item.name,
+        count: Number(item.count) || 0,
+        avgScore: Number(Number(item.avgScore).toFixed(2)),
+      })),
+    [data],
+  );
+
+  const countYMax = useMemo(() => buildCountYMax(chartData), [chartData]);
+
+  const comboChartConfig = useMemo(
+    () => ({
+      data: chartData,
+      xField: 'name',
+      height: 380,
+      legend: false,
+      axis: {
+        x: {
+          title: false,
+          labelAutoRotate: chartData.length > 4,
+        },
+      },
+      tooltip: {
+        title: (datum) => datum.name,
+        items: [
+          (datum) => {
+            const row = chartData.find((item) => item.name === datum.name) || datum;
+            return {
+              name: 'Số tiêu chí phụ trách',
+              value: row.count,
+              color: DEPT_CHART_COLUMN_COLOR,
+            };
+          },
+          (datum) => {
+            const row = chartData.find((item) => item.name === datum.name) || datum;
+            return {
+              name: 'Điểm trung bình',
+              value: Number(row.avgScore).toFixed(2),
+              color: DEPT_CHART_LINE_COLOR,
+            };
+          },
+        ],
+      },
+      children: [
+        {
+          type: 'interval',
+          yField: 'count',
+          scale: {
+            y: {
+              domain: [0, countYMax],
+              nice: false,
+            },
+          },
+          axis: {
+            y: {
+              position: 'left',
+              title: 'Số tiêu chí',
+              grid: true,
+            },
+          },
+          style: {
+            fill: DEPT_CHART_COLUMN_COLOR,
+            maxWidth: 56,
+            radiusTopLeft: 6,
+            radiusTopRight: 6,
+          },
+          label: {
+            position: 'outside',
+            text: 'count',
+            offset: 8,
+            style: {
+              fill: '#141414',
+              fontSize: 14,
+              fontWeight: 700,
+            },
+          },
+        },
+        {
+          type: 'line',
+          yField: 'avgScore',
+          shapeField: 'smooth',
+          scale: {
+            y: {
+              domain: [0, 5],
+              nice: false,
+            },
+          },
+          axis: {
+            y: {
+              position: 'right',
+              title: 'Điểm trung bình',
+              grid: null,
+            },
+          },
+          style: {
+            stroke: DEPT_CHART_LINE_COLOR,
+            lineWidth: 2,
+          },
+        },
+      ],
+    }),
+    [chartData, countYMax],
+  );
+
+  if (!chartData.length) {
+    return (
+      <div
+        style={{
+          padding: '32px 16px',
+          textAlign: 'center',
+          color: '#8c8c8c',
+          background: '#fafafa',
+          borderRadius: 8,
+        }}
+      >
+        Chưa có dữ liệu theo khoa/phòng
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <DualAxes {...comboChartConfig} />
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: 24,
+          marginTop: 12,
+          fontSize: 13,
+          color: '#595959',
+        }}
+      >
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <span
+            style={{
+              width: 12,
+              height: 12,
+              backgroundColor: DEPT_CHART_COLUMN_COLOR,
+              display: 'inline-block',
+            }}
+          />
+          Số tiêu chí phụ trách
+        </span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <span
+            style={{
+              width: 16,
+              height: 2,
+              backgroundColor: DEPT_CHART_LINE_COLOR,
+              display: 'inline-block',
+            }}
+          />
+          Điểm trung bình
+        </span>
+      </div>
+    </div>
+  );
+};
 
 const LevelLegend = () => (
   <div
@@ -222,165 +394,176 @@ const PartGroupLevelStackedChart = ({ data }) => {
   );
 };
 
-const LevelDistributionStackedBar = ({ data, total }) => {
-  const segments = useMemo(() => {
-    const safeTotal = Number(total) || 0;
-    return data.map((item) => {
-      const count = Number(item.count) || 0;
-      const percent = safeTotal ? (count / safeTotal) * 100 : 0;
-      return {
-        ...item,
-        count,
-        percent,
-        label: `${Math.round(percent)}%`,
-      };
-    });
-  }, [data, total]);
+const LEVEL_COLOR_RANGE = PART_LEVELS.map((level) => getLevelColorStyle(level).bg);
+const LEVEL_LABELS = PART_LEVELS.map((level) => `Mức ${level}`);
 
-  const hasData = segments.some((item) => item.count > 0);
+const LevelDistributionDonutChart = ({ data, total }) => {
   const totalApplied = Number(total) || 0;
 
-  const renderSegmentTooltip = (segment) => (
-    <div>
-      <div style={{ fontWeight: 600 }}>{segment.level}</div>
-      <div>{segment.count} tiêu chí đang đạt</div>
-    </div>
+  const chartData = useMemo(() => {
+    const safeTotal = totalApplied || 0;
+    return (data || [])
+      .map((item) => {
+        const count = Number(item.count) || 0;
+        const percent = safeTotal ? (count / safeTotal) * 100 : 0;
+        return {
+          level: item.level,
+          count,
+          percent,
+        };
+      })
+      .filter((item) => item.count > 0);
+  }, [data, totalApplied]);
+
+  const legendItems = useMemo(
+    () =>
+      PART_LEVELS.map((levelNum) => {
+        const levelLabel = `Mức ${levelNum}`;
+        const found = (data || []).find((item) => item.level === levelLabel);
+        const count = Number(found?.count) || 0;
+        const percent = totalApplied ? (count / totalApplied) * 100 : 0;
+        return {
+          level: levelLabel,
+          count,
+          percent,
+          ...getLevelColorStyle(levelNum),
+        };
+      }),
+    [data, totalApplied],
   );
 
-  return (
-    <div style={{ marginBottom: 8 }}>
+  const pieConfig = useMemo(
+    () => ({
+      data: chartData,
+      angleField: 'count',
+      colorField: 'level',
+      innerRadius: 0.62,
+      radius: 0.88,
+      height: 320,
+      legend: false,
+      scale: {
+        color: {
+          domain: LEVEL_LABELS,
+          range: LEVEL_COLOR_RANGE,
+        },
+      },
+      label: {
+        position: 'outside',
+        text: (datum) => `${Math.round(datum.percent)}%`,
+        style: {
+          fontSize: 12,
+          fontWeight: 500,
+          fill: '#595959',
+        },
+      },
+      tooltip: {
+        title: (datum) => datum.level,
+        items: [
+          (datum) => ({
+            name: 'Số tiêu chí đang đạt',
+            value: datum.count,
+          }),
+          (datum) => ({
+            name: 'Tỷ lệ',
+            value: `${Math.round(datum.percent)}%`,
+          }),
+        ],
+      },
+      annotations: [
+        {
+          type: 'text',
+          style: {
+            text: String(totalApplied),
+            x: '50%',
+            y: '46%',
+            textAlign: 'center',
+            fontSize: 28,
+            fontWeight: 700,
+            fill: '#141414',
+          },
+        },
+        {
+          type: 'text',
+          style: {
+            text: 'Tiêu chí áp dụng',
+            x: '50%',
+            y: '56%',
+            textAlign: 'center',
+            fontSize: 12,
+            fill: '#8c8c8c',
+          },
+        },
+      ],
+    }),
+    [chartData, totalApplied],
+  );
+
+  if (!chartData.length) {
+    return (
       <div
         style={{
-          display: 'flex',
-          alignItems: 'stretch',
-          gap: 24,
-          marginBottom: 16,
+          padding: '32px 16px',
+          textAlign: 'center',
+          color: '#8c8c8c',
+          background: '#fafafa',
+          borderRadius: 8,
         }}
       >
-        <div style={{ flex: 1, minWidth: 0 }}>
+        Chưa có dữ liệu phân bố theo mức
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 96,
+        flexWrap: 'wrap',
+        padding: '8px 16px',
+      }}
+    >
+      <div style={{ width: 320, flexShrink: 0 }}>
+        <Pie {...pieConfig} />
+      </div>
+      <div style={{ flex: '0 1 360px', minWidth: 260 }}>
+        {legendItems.map((item) => (
           <div
+            key={item.level}
             style={{
               display: 'flex',
-              width: '100%',
-              height: 50,
-              borderRadius: 4,
-              overflow: 'hidden',
-              background: hasData ? 'transparent' : '#f0f0f0',
+              alignItems: 'center',
+              gap: 16,
+              padding: '14px 0',
+              borderBottom: '1px solid #f0f0f0',
             }}
           >
-            {hasData ? (
-              segments.map((segment) => {
-                if (segment.percent <= 0) return null;
-                const levelStyle = getLevelColorStyle(getLevelNumberFromLabel(segment.level));
-                return (
-                  <div
-                    key={segment.level}
-                    style={{
-                      width: `${segment.percent}%`,
-                      minWidth: segment.percent >= 4 ? undefined : 2,
-                      height: '100%',
-                      display: 'flex',
-                    }}
-                  >
-                    <Tooltip
-                      title={renderSegmentTooltip(segment)}
-                      styles={{ root: { width: '100%' } }}
-                    >
-                      <div
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          backgroundColor: levelStyle.bg,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        {segment.percent >= 8 ? (
-                          <span style={{ color: levelStyle.color, fontSize: 12, fontWeight: 600 }}>
-                            {segment.label}
-                          </span>
-                        ) : null}
-                      </div>
-                    </Tooltip>
-                  </div>
-                );
-              })
-            ) : (
-              <div
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#8c8c8c',
-                  fontSize: 13,
-                }}
-              >
-                Chưa có dữ liệu phân bố theo mức
-              </div>
-            )}
-          </div>
-        </div>
-        <div
-          style={{
-            flexShrink: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            paddingLeft: 24,
-            borderLeft: '1px dashed #d9d9d9',
-            minWidth: 132,
-          }}
-        >
-          <div style={{ fontSize: 28, fontWeight: 700, color: '#141414', lineHeight: 1.2 }}>
-            {totalApplied}
-          </div>
-          <Text type="secondary" style={{ fontSize: 12, textAlign: 'center', marginTop: 4 }}>
-            Tiêu chí áp dụng
-          </Text>
-        </div>
-      </div>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-          gap: '10px 20px',
-          marginTop: 16,
-        }}
-      >
-        {segments.map((segment) => {
-          const levelStyle = getLevelColorStyle(getLevelNumberFromLabel(segment.level));
-          return (
-            <div
-              key={segment.level}
+            <span
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                fontSize: 13,
-                color: '#595959',
+                width: 22,
+                height: 22,
+                borderRadius: 6,
+                backgroundColor: item.bg,
+                flexShrink: 0,
               }}
-            >
-              <span
-                style={{
-                  width: 12,
-                  height: 12,
-                  backgroundColor: levelStyle.bg,
-                  flexShrink: 0,
-                }}
-              />
-              <span>{segment.level}</span>
-              <span style={{ fontWeight: 500 }}>{segment.label}</span>
+            />
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 16, fontWeight: 600, color: '#141414', lineHeight: 1.3 }}>
+                {item.level}
+              </div>
+              <div style={{ fontSize: 14, color: '#8c8c8c', marginTop: 4, lineHeight: 1.4 }}>
+                {item.count} tiêu chí · {Math.round(item.percent)}%
+              </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     </div>
   );
 };
+
 const SECTION_GAP = 32;
 const SECTION_TITLE_STYLE = {
   margin: 0,
@@ -390,13 +573,33 @@ const SECTION_TITLE_STYLE = {
   color: '#141414',
   lineHeight: 1.4,
 };
-const CHART_TITLE_STYLE = {
-  margin: '8px 0 16px',
-  fontSize: 15,
-  fontWeight: 600,
-  color: '#434343',
-  lineHeight: 1.4,
+const CHART_PANEL_STYLE = {
+  marginBottom: 24,
+  padding: '20px 24px 24px',
+  background: '#fff',
+  border: '1px solid #e8e8e8',
+  borderRadius: 12,
 };
+
+const ReportChartPanel = ({ title, description, children }) => (
+  <div style={CHART_PANEL_STYLE}>
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ fontSize: 16, fontWeight: 600, color: '#141414', lineHeight: 1.4 }}>
+        {title}
+      </div>
+      {description ? (
+        <Text
+          type="secondary"
+          style={{ display: 'block', marginTop: 6, fontSize: 13, lineHeight: 1.5 }}
+        >
+          {description}
+        </Text>
+      ) : null}
+    </div>
+    {children}
+  </div>
+);
+
 const REPORT_CARD_STYLE = {
   marginBottom: SECTION_GAP,
   borderRadius: 12,
@@ -411,25 +614,16 @@ const ReportSectionTitle = ({ children }) => (
   </Title>
 );
 
-const ReportChartTitle = ({ children }) => (
-  <Title level={5} style={CHART_TITLE_STYLE}>
-    {children}
-  </Title>
-);
-
-const SUMMARY_STAT_THEMES = [
-  { accent: '#8879DF', bg: 'linear-gradient(135deg, #f3f0ff 0%, #ffffff 70%)' },
-  { accent: '#1677ff', bg: 'linear-gradient(135deg, #e6f4ff 0%, #ffffff 70%)' },
-  { accent: '#389e0d', bg: 'linear-gradient(135deg, #f6ffed 0%, #ffffff 70%)' },
-  { accent: '#d48806', bg: 'linear-gradient(135deg, #fffbe6 0%, #ffffff 70%)' },
-];
+const SUMMARY_STAT_THEME = {
+  accent: '#1677ff',
+  bg: '#e6f4ff',
+};
 
 const SummaryStatBlock = ({ label, value, tooltip, accent, background }) => (
   <div
     style={{
       background: background || '#fff',
       border: `1px solid ${accent}33`,
-      borderTop: `3px solid ${accent}`,
       borderRadius: 12,
       padding: '20px 22px',
       minHeight: 118,
@@ -682,6 +876,8 @@ const Report = () => {
     }));
   }, [summary?.byPart, details]);
 
+  const departmentChartData = useMemo(() => summary?.byDepartment || [], [summary?.byDepartment]);
+
   const notAchievedCriteriaList = useMemo(() => {
     const source = matrix.length ? matrix : details;
     return source.filter(isCriteriaBelowExpectedLevel).map((c) => ({
@@ -703,25 +899,25 @@ const Report = () => {
       label: 'Tiêu chí áp dụng',
       value: `${totalApplied}/${totalStandard}`,
       tooltip: `Tổng số tiêu chí được áp dụng đánh giá trên bộ chuẩn ${totalStandard} tiêu chí. Không đánh giá ${excludedCodesText}.`,
-      ...SUMMARY_STAT_THEMES[0],
+      ...SUMMARY_STAT_THEME,
     },
     {
       label: 'Tỷ lệ áp dụng',
       value: `${summary?.appliedPercent?.toFixed(0) || 0}%`,
       tooltip: `Tỷ lệ tiêu chí áp dụng = ${totalApplied}/${totalStandard} tiêu chí chuẩn.`,
-      ...SUMMARY_STAT_THEMES[1],
+      ...SUMMARY_STAT_THEME,
     },
     {
       label: 'Tổng điểm',
       value: summary?.totalWeightedScore || 0,
       tooltip: `Tổng điểm có hệ số chương (C3/C5 nhân 2). Hệ số: ${summary?.totalWeight || 0}.`,
-      ...SUMMARY_STAT_THEMES[2],
+      ...SUMMARY_STAT_THEME,
     },
     {
       label: 'Điểm trung bình',
       value: summary?.overallScore?.toFixed(2) || '0.00',
       tooltip: 'Điểm trung bình chung các tiêu chí được áp dụng đánh giá.',
-      ...SUMMARY_STAT_THEMES[3],
+      ...SUMMARY_STAT_THEME,
     },
   ];
 
@@ -1027,8 +1223,12 @@ const Report = () => {
           />
         )}
 
-        <ReportChartTitle>Biểu đồ 1. Phân bố tiêu chí theo mức</ReportChartTitle>
-        <LevelDistributionStackedBar data={levelChartData} total={totalApplied} />
+        <ReportChartPanel
+          title="Biểu đồ 1. Phân bố tiêu chí theo mức"
+          description="Tỷ lệ và số lượng tiêu chí đạt từng mức trên tổng tiêu chí đang áp dụng"
+        >
+          <LevelDistributionDonutChart data={levelChartData} total={totalApplied} />
+        </ReportChartPanel>
       </Card>
 
       <Card style={REPORT_CARD_STYLE} styles={{ body: { padding: 28 } }} loading={loading}>
@@ -1043,8 +1243,12 @@ const Report = () => {
             style={{ marginBottom: 28 }}
           />
         )}
-        <ReportChartTitle>Biểu đồ 2. Điểm trung bình theo nhóm tiêu chí</ReportChartTitle>
-        <PartGroupLevelStackedChart data={partStackedChartData} />
+        <ReportChartPanel
+          title="Biểu đồ 2. Điểm trung bình theo nhóm tiêu chí"
+          description="Số tiêu chí theo từng mức và điểm trung bình của mỗi nhóm tiêu chí"
+        >
+          <PartGroupLevelStackedChart data={partStackedChartData} />
+        </ReportChartPanel>
       </Card>
 
       <Card style={REPORT_CARD_STYLE} styles={{ body: { padding: 28 } }} loading={loading}>
@@ -1055,7 +1259,14 @@ const Report = () => {
           dataSource={summary?.byDepartment || []}
           rowKey={(r) => r.departmentId || r.name}
           pagination={false}
+          style={{ marginBottom: 28 }}
         />
+        <ReportChartPanel
+          title="Biểu đồ 3. Số tiêu chí và điểm trung bình theo khoa/phòng"
+          description="Số tiêu chí phụ trách và điểm trung bình của từng khoa/phòng"
+        >
+          <DepartmentComboChart data={departmentChartData} />
+        </ReportChartPanel>
       </Card>
 
       <Card style={REPORT_CARD_STYLE} styles={{ body: { padding: 28 } }} loading={loading}>
