@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useModel } from '@umijs/max';
 import { Table, Card, message, Tag, Progress, Typography, Row, Col, Tooltip, Button } from 'antd';
 import { InfoCircleOutlined, DownloadOutlined } from '@ant-design/icons';
-import { DualAxes, Pie } from '@ant-design/plots';
+import { Pie } from '@ant-design/plots';
 import axiosInstance from '../../utils/axiosInstance';
 import dayjs from 'dayjs';
 import {
@@ -22,123 +22,39 @@ const { Title, Text } = Typography;
 const SHOW_SECTION_I_II_TABLES = false;
 
 const PART_LEVELS = [1, 2, 3, 4, 5];
-const DEPT_CHART_COLUMN_COLOR = '#9857de';
-const DEPT_CHART_LINE_COLOR = '#532387';
+const DEPT_SCORE_MAX = 5;
+const DEPT_ROW_HEIGHT = 44;
 
-const buildCountYMax = (data) => {
-  const max = Math.max(0, ...data.map((item) => Number(item.count) || 0));
-  if (max === 0) return 5;
-  return Math.max(5, Math.ceil(max * 1.15));
-};
-
-const DepartmentComboChart = ({ data }) => {
-  const chartData = useMemo(
+const DepartmentRankingChart = ({ data }) => {
+  const rows = useMemo(
     () =>
-      (data || []).map((item) => ({
-        name: item.name,
-        count: Number(item.count) || 0,
-        avgScore: Number(Number(item.avgScore).toFixed(2)),
-      })),
+      [...(data || [])]
+        .map((item) => ({
+          name: item.name,
+          rank: Number(item.rank) || 0,
+          avgScore: Number(Number(item.avgScore).toFixed(2)),
+          count: Number(item.count) || 0,
+        }))
+        .sort((a, b) => a.rank - b.rank),
     [data],
   );
 
-  const countYMax = useMemo(() => buildCountYMax(chartData), [chartData]);
+  const getBarColor = (rank, total) => {
+    if (total <= 1) return BRAND_COLOR;
+    const opacity = Math.max(0.35, 1 - ((rank - 1) / (total - 1)) * 0.65);
+    return `rgba(58, 74, 255, ${opacity.toFixed(2)})`;
+  };
 
-  const comboChartConfig = useMemo(
-    () => ({
-      data: chartData,
-      xField: 'name',
-      height: 380,
-      legend: false,
-      axis: {
-        x: {
-          title: false,
-          labelAutoRotate: chartData.length > 4,
-        },
-      },
-      tooltip: {
-        title: (datum) => datum.name,
-        items: [
-          (datum) => {
-            const row = chartData.find((item) => item.name === datum.name) || datum;
-            return {
-              name: 'Số tiêu chí phụ trách',
-              value: row.count,
-              color: DEPT_CHART_COLUMN_COLOR,
-            };
-          },
-          (datum) => {
-            const row = chartData.find((item) => item.name === datum.name) || datum;
-            return {
-              name: 'Điểm trung bình',
-              value: Number(row.avgScore).toFixed(2),
-              color: DEPT_CHART_LINE_COLOR,
-            };
-          },
-        ],
-      },
-      children: [
-        {
-          type: 'interval',
-          yField: 'count',
-          scale: {
-            y: {
-              domain: [0, countYMax],
-              nice: false,
-            },
-          },
-          axis: {
-            y: {
-              position: 'left',
-              title: 'Số tiêu chí',
-              grid: true,
-            },
-          },
-          style: {
-            fill: DEPT_CHART_COLUMN_COLOR,
-            maxWidth: 56,
-            radiusTopLeft: 6,
-            radiusTopRight: 6,
-          },
-          label: {
-            position: 'outside',
-            text: 'count',
-            offset: 8,
-            style: {
-              fill: '#141414',
-              fontSize: 14,
-              fontWeight: 700,
-            },
-          },
-        },
-        {
-          type: 'line',
-          yField: 'avgScore',
-          shapeField: 'smooth',
-          scale: {
-            y: {
-              domain: [0, 5],
-              nice: false,
-            },
-          },
-          axis: {
-            y: {
-              position: 'right',
-              title: 'Điểm trung bình',
-              grid: null,
-            },
-          },
-          style: {
-            stroke: DEPT_CHART_LINE_COLOR,
-            lineWidth: 2,
-          },
-        },
-      ],
-    }),
-    [chartData, countYMax],
+  const renderRowTooltip = (row) => (
+    <div>
+      <div style={{ fontWeight: 600, marginBottom: 8 }}>{row.name}</div>
+      <div>Xếp hạng: {row.rank}</div>
+      <div>Điểm trung bình: {row.avgScore.toFixed(2)}</div>
+      <div style={{ marginTop: 4, color: '#8c8c8c' }}>Số tiêu chí phụ trách: {row.count}</div>
+    </div>
   );
 
-  if (!chartData.length) {
+  if (!rows.length) {
     return (
       <div
         style={{
@@ -155,14 +71,150 @@ const DepartmentComboChart = ({ data }) => {
   }
 
   return (
-    <div>
-      <DualAxes {...comboChartConfig} />
+    <div style={{ marginBottom: 8 }}>
+      {rows.map((row) => (
+        <div
+          key={`${row.rank}-${row.name}`}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            marginBottom: 12,
+          }}
+        >
+          <div
+            style={{
+              width: 36,
+              flexShrink: 0,
+              display: 'flex',
+              justifyContent: 'center',
+            }}
+          >
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: row.rank <= 3 ? BRAND_COLOR : BRAND_COLOR_LIGHT_BG,
+                color: row.rank <= 3 ? '#ffffff' : BRAND_COLOR,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 700,
+                fontSize: 13,
+              }}
+            >
+              {row.rank}
+            </div>
+          </div>
+          <div
+            style={{
+              width: 120,
+              flexShrink: 0,
+              fontSize: 13,
+              fontWeight: 600,
+              color: '#434343',
+              lineHeight: 1.35,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+            title={row.name}
+          >
+            {row.name}
+          </div>
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <div
+              style={{
+                flex: 1,
+                minWidth: 0,
+                height: DEPT_ROW_HEIGHT,
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              <Tooltip title={renderRowTooltip(row)} styles={{ root: { width: '100%' } }}>
+                <div
+                  style={{
+                    width: `${(row.avgScore / DEPT_SCORE_MAX) * 100}%`,
+                    minWidth: row.avgScore > 0 ? 28 : 0,
+                    height: '100%',
+                    borderRadius: '0 6px 6px 0',
+                    backgroundColor: getBarColor(row.rank, rows.length),
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'flex-end',
+                    paddingRight: 10,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {(row.avgScore / DEPT_SCORE_MAX) * 100 >= 12 ? (
+                    <span style={{ color: '#ffffff', fontSize: 12, fontWeight: 700 }}>
+                      {row.avgScore.toFixed(2)}
+                    </span>
+                  ) : null}
+                </div>
+              </Tooltip>
+            </div>
+            <div
+              style={{
+                width: 48,
+                flexShrink: 0,
+                textAlign: 'right',
+                fontWeight: 700,
+                fontSize: 14,
+                color: BRAND_COLOR,
+              }}
+            >
+              {row.avgScore.toFixed(2)}
+            </div>
+            <div
+              style={{
+                width: 72,
+                flexShrink: 0,
+                textAlign: 'right',
+                fontSize: 12,
+                color: '#8c8c8c',
+              }}
+            >
+              {row.count} TC
+            </div>
+          </div>
+        </div>
+      ))}
+      <div
+        style={{
+          marginLeft: 168,
+          marginTop: 4,
+          paddingTop: 8,
+          borderTop: '1px solid #e8e8e8',
+          display: 'flex',
+          justifyContent: 'space-between',
+          fontSize: 11,
+          color: '#8c8c8c',
+        }}
+      >
+        <span>0</span>
+        <span>1</span>
+        <span>2</span>
+        <span>3</span>
+        <span>4</span>
+        <span>5</span>
+      </div>
       <div
         style={{
           display: 'flex',
           justifyContent: 'center',
           gap: 24,
-          marginTop: 12,
+          marginTop: 16,
           fontSize: 13,
           color: '#595959',
         }}
@@ -170,24 +222,18 @@ const DepartmentComboChart = ({ data }) => {
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
           <span
             style={{
-              width: 12,
-              height: 12,
-              backgroundColor: DEPT_CHART_COLUMN_COLOR,
+              width: 16,
+              height: 10,
+              backgroundColor: BRAND_COLOR,
+              borderRadius: 2,
               display: 'inline-block',
             }}
           />
-          Số tiêu chí phụ trách
+          Điểm trung bình (0–5)
         </span>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-          <span
-            style={{
-              width: 16,
-              height: 2,
-              backgroundColor: DEPT_CHART_LINE_COLOR,
-              display: 'inline-block',
-            }}
-          />
-          Điểm trung bình
+          <span style={{ fontSize: 12, color: '#8c8c8c' }}>3 TC</span>
+          Số tiêu chí phụ trách
         </span>
       </div>
     </div>
@@ -1263,10 +1309,10 @@ const Report = () => {
           style={{ marginBottom: 28 }}
         />
         <ReportChartPanel
-          title="Biểu đồ 3. Số tiêu chí và điểm trung bình theo khoa/phòng"
-          description="Số tiêu chí phụ trách và điểm trung bình của từng khoa/phòng"
+          title="Biểu đồ 3. Xếp hạng và điểm trung bình theo khoa/phòng"
+          description="Thứ tự xếp hạng và điểm trung bình là thông tin chính; số tiêu chí phụ trách hiển thị phụ bên phải"
         >
-          <DepartmentComboChart data={departmentChartData} />
+          <DepartmentRankingChart data={departmentChartData} />
         </ReportChartPanel>
       </Card>
 
