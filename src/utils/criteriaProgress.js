@@ -50,6 +50,36 @@ export function isCriteriaBelowExpectedLevel(record) {
   return getCriteriaCurrentLevel(record) < getCriteriaExpectedLevel(record);
 }
 
+export function isCriteriaAchieved(record) {
+  return getCriteriaCurrentLevel(record) >= getCriteriaExpectedLevel(record);
+}
+
+export function isCriteriaGoalOverdue(record) {
+  const raw = record?.expectedLevelCompletionDate;
+  if (!raw) return false;
+  const deadline = new Date(raw);
+  if (Number.isNaN(deadline.getTime())) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  deadline.setHours(0, 0, 0, 0);
+  return today > deadline;
+}
+
+/** achieved | improving | failed */
+export function getCriteriaGoalStatus(record) {
+  if (isCriteriaAchieved(record)) return 'achieved';
+  if (isCriteriaGoalOverdue(record)) return 'failed';
+  return 'improving';
+}
+
+export function countCriteriaByGoalStatus(records) {
+  const counts = { achieved: 0, improving: 0, failed: 0 };
+  (records || []).forEach((record) => {
+    counts[getCriteriaGoalStatus(record)] += 1;
+  });
+  return counts;
+}
+
 export function getCriteriaProgressPercent(record) {
   if (record === null || record === undefined) return 0;
   if (

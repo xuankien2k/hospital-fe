@@ -1,9 +1,9 @@
 export const LEVEL_COLORS = {
-  1: { bg: 'rgba(58, 74, 255, 0.1)', color: '#3A4AFF' },
-  2: { bg: 'rgba(58, 74, 255, 0.3)', color: '#141414' },
-  3: { bg: 'rgba(58, 74, 255, 0.5)', color: '#141414' },
-  4: { bg: 'rgba(58, 74, 255, 0.7)', color: '#ffffff' },
-  5: { bg: 'rgba(58, 74, 255, 1)', color: '#ffffff' },
+  1: { bg: '#2A2A2A', color: '#ffffff' },
+  2: { bg: '#9E0003', color: '#ffffff' },
+  3: { bg: '#E61515', color: '#ffffff' },
+  4: { bg: '#FF6600', color: '#ffffff' },
+  5: { bg: '#FFD000', color: '#141414' },
 };
 
 export const getLevelColorStyle = (level) => {

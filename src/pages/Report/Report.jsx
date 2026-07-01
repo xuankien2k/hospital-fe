@@ -11,6 +11,7 @@ import {
   getCriteriaCurrentLevel,
   getCriteriaExpectedLevel,
   isCriteriaBelowExpectedLevel,
+  countCriteriaByGoalStatus,
 } from '../../utils/criteriaProgress';
 import { canFilterByDepartment } from '../../utils/departments';
 import { isContentAdmin } from '../../utils/roles';
@@ -23,7 +24,7 @@ const SHOW_SECTION_I_II_TABLES = false;
 
 const PART_LEVELS = [1, 2, 3, 4, 5];
 const DEPT_SCORE_MAX = 5;
-const DEPT_ROW_HEIGHT = 44;
+const DEPT_ROW_HEIGHT = 28;
 
 const DepartmentRankingChart = ({ data }) => {
   const rows = useMemo(
@@ -78,13 +79,13 @@ const DepartmentRankingChart = ({ data }) => {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 12,
-            marginBottom: 12,
+            gap: 8,
+            marginBottom: 6,
           }}
         >
           <div
             style={{
-              width: 36,
+              width: 28,
               flexShrink: 0,
               display: 'flex',
               justifyContent: 'center',
@@ -92,16 +93,16 @@ const DepartmentRankingChart = ({ data }) => {
           >
             <div
               style={{
-                width: 32,
-                height: 32,
-                borderRadius: 8,
+                width: 24,
+                height: 24,
+                borderRadius: 6,
                 background: row.rank <= 3 ? BRAND_COLOR : BRAND_COLOR_LIGHT_BG,
                 color: row.rank <= 3 ? '#ffffff' : BRAND_COLOR,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: 700,
-                fontSize: 13,
+                fontSize: 11,
               }}
             >
               {row.rank}
@@ -111,10 +112,10 @@ const DepartmentRankingChart = ({ data }) => {
             style={{
               width: 120,
               flexShrink: 0,
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: 600,
               color: '#434343',
-              lineHeight: 1.35,
+              lineHeight: 1.2,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
@@ -129,7 +130,7 @@ const DepartmentRankingChart = ({ data }) => {
               minWidth: 0,
               display: 'flex',
               alignItems: 'center',
-              gap: 10,
+              gap: 6,
             }}
           >
             <div
@@ -145,19 +146,19 @@ const DepartmentRankingChart = ({ data }) => {
                 <div
                   style={{
                     width: `${(row.avgScore / DEPT_SCORE_MAX) * 100}%`,
-                    minWidth: row.avgScore > 0 ? 28 : 0,
+                    minWidth: row.avgScore > 0 ? 20 : 0,
                     height: '100%',
-                    borderRadius: '0 6px 6px 0',
+                    borderRadius: '0 4px 4px 0',
                     backgroundColor: getBarColor(row.rank, rows.length),
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'flex-end',
-                    paddingRight: 10,
+                    paddingRight: 6,
                     cursor: 'pointer',
                   }}
                 >
                   {(row.avgScore / DEPT_SCORE_MAX) * 100 >= 12 ? (
-                    <span style={{ color: '#ffffff', fontSize: 12, fontWeight: 700 }}>
+                    <span style={{ color: '#ffffff', fontSize: 11, fontWeight: 700 }}>
                       {row.avgScore.toFixed(2)}
                     </span>
                   ) : null}
@@ -166,11 +167,11 @@ const DepartmentRankingChart = ({ data }) => {
             </div>
             <div
               style={{
-                width: 48,
+                width: 44,
                 flexShrink: 0,
                 textAlign: 'right',
                 fontWeight: 700,
-                fontSize: 14,
+                fontSize: 12,
                 color: BRAND_COLOR,
               }}
             >
@@ -178,10 +179,10 @@ const DepartmentRankingChart = ({ data }) => {
             </div>
             <div
               style={{
-                width: 72,
+                width: 56,
                 flexShrink: 0,
                 textAlign: 'right',
-                fontSize: 12,
+                fontSize: 11,
                 color: '#8c8c8c',
               }}
             >
@@ -192,13 +193,13 @@ const DepartmentRankingChart = ({ data }) => {
       ))}
       <div
         style={{
-          marginLeft: 168,
-          marginTop: 4,
-          paddingTop: 8,
+          marginLeft: 156,
+          marginTop: 2,
+          paddingTop: 6,
           borderTop: '1px solid #e8e8e8',
           display: 'flex',
           justifyContent: 'space-between',
-          fontSize: 11,
+          fontSize: 10,
           color: '#8c8c8c',
         }}
       >
@@ -213,17 +214,17 @@ const DepartmentRankingChart = ({ data }) => {
         style={{
           display: 'flex',
           justifyContent: 'center',
-          gap: 24,
-          marginTop: 16,
-          fontSize: 13,
+          gap: 20,
+          marginTop: 10,
+          fontSize: 12,
           color: '#595959',
         }}
       >
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
           <span
             style={{
-              width: 16,
-              height: 10,
+              width: 14,
+              height: 8,
               backgroundColor: BRAND_COLOR,
               borderRadius: 2,
               display: 'inline-block',
@@ -666,6 +667,12 @@ const SUMMARY_STAT_THEME = {
   bg: BRAND_COLOR_LIGHT_BG,
 };
 
+const GOAL_STATUS_THEMES = {
+  achieved: { accent: '#16a34a', bg: '#f0fdf4' },
+  improving: { accent: '#ca8a04', bg: '#fffbeb' },
+  failed: { accent: '#E61515', bg: '#fef2f2' },
+};
+
 const SummaryStatBlock = ({ label, value, tooltip, accent, background }) => (
   <div
     style={{
@@ -925,6 +932,8 @@ const Report = () => {
 
   const departmentChartData = useMemo(() => summary?.byDepartment || [], [summary?.byDepartment]);
 
+  const goalStatusCounts = useMemo(() => countCriteriaByGoalStatus(details), [details]);
+
   const notAchievedCriteriaList = useMemo(() => {
     const source = matrix.length ? matrix : details;
     return source.filter(isCriteriaBelowExpectedLevel).map((c) => ({
@@ -965,6 +974,27 @@ const Report = () => {
       value: summary?.overallScore?.toFixed(2) || '0.00',
       tooltip: 'Điểm trung bình chung các tiêu chí được áp dụng đánh giá.',
       ...SUMMARY_STAT_THEME,
+    },
+  ];
+
+  const goalStatusStatBlocks = [
+    {
+      label: 'Đạt',
+      value: goalStatusCounts.achieved,
+      tooltip: 'Tiêu chí đã đạt mức dự kiến (mức hiện tại ≥ mức dự kiến).',
+      ...GOAL_STATUS_THEMES.achieved,
+    },
+    {
+      label: 'Đang cải thiện',
+      value: goalStatusCounts.improving,
+      tooltip: 'Tiêu chí chưa đạt mức dự kiến nhưng vẫn còn trong thời hạn hoàn thành.',
+      ...GOAL_STATUS_THEMES.improving,
+    },
+    {
+      label: 'Chưa đạt mục tiêu',
+      value: goalStatusCounts.failed,
+      tooltip: 'Tiêu chí chưa đạt mức dự kiến và đã quá hạn hoàn thành.',
+      ...GOAL_STATUS_THEMES.failed,
     },
   ];
 
@@ -1245,9 +1275,22 @@ const Report = () => {
 
       <Card style={REPORT_CARD_STYLE} styles={{ body: { padding: 28 } }} loading={loading}>
         <ReportSectionTitle>I. TÓM TẮT KẾT QUẢ BỘ TIÊU CHÍ CHẤT LƯỢNG BỆNH VIỆN</ReportSectionTitle>
-        <Row gutter={[16, 16]} style={{ marginBottom: 28 }}>
+        <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
           {summaryStatBlocks.map((block) => (
             <Col key={block.label} xs={24} sm={12} md={6}>
+              <SummaryStatBlock
+                label={block.label}
+                value={block.value}
+                tooltip={block.tooltip}
+                accent={block.accent}
+                background={block.bg}
+              />
+            </Col>
+          ))}
+        </Row>
+        <Row gutter={[16, 16]} style={{ marginBottom: 28 }}>
+          {goalStatusStatBlocks.map((block) => (
+            <Col key={block.label} xs={24} sm={8}>
               <SummaryStatBlock
                 label={block.label}
                 value={block.value}
