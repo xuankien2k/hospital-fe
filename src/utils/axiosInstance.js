@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAuthToken } from './authStorage';
 
 // Dev: localhost. Production: cùng domain (Nginx proxy /api → backend)
 const API_BASE_URL =
@@ -16,7 +17,7 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     // Thêm token vào header nếu có
-    const token = localStorage.getItem('token');
+    const token = getAuthToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

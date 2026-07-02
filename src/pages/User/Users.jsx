@@ -12,14 +12,14 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import axiosInstance from '../../utils/axiosInstance';
+import { getCurrentUser as getStoredUser } from '../../utils/authStorage';
 import { canManageUsersFully, isSystemAdmin } from '../../utils/roles';
 
 const { Option } = Select;
 
 const Users = () => {
   const { initialState } = useModel('@@initialState');
-  const currentUser =
-    initialState?.currentUser || JSON.parse(localStorage.getItem('currentUser') || 'null');
+  const currentUser = initialState?.currentUser || getStoredUser();
   const canManageUsers = canManageUsersFully(currentUser?.role);
 
   // State declarations

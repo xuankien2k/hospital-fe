@@ -1,6 +1,9 @@
 import { useIntl } from '@umijs/max';
 import { Button, message, notification } from 'antd';
 import defaultSettings from '../config/defaultSettings';
+import { configureMessageDefaults } from './utils/configureMessage';
+
+configureMessageDefaults();
 
 const { pwa } = defaultSettings;
 const isHttps = document.location.protocol === 'https:';

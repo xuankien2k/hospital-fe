@@ -32,11 +32,15 @@ import axiosInstance from '../../utils/axiosInstance';
 import {
   getCriteriaProgressPercent,
   getCriteriaProgressStatus,
+  getCriteriaCurrentLevel,
+  deriveCurrentLevelFromLevels,
 } from '../../utils/criteriaProgress';
 import { canFilterByDepartment, getCriteriaDepartmentOptions } from '../../utils/departments';
 import { isContentAdmin, canCreateCriteria as roleCanCreateCriteria } from '../../utils/roles';
 import { LEVEL_COLORS, getLevelColorStyle } from '../../utils/criteriaLevelColors';
 import { BRAND_COLOR } from '../../utils/brandColors';
+import CriteriaEvaluationGuide from '../../components/CriteriaEvaluationGuide';
+import { getCurrentUser as getStoredUser } from '../../utils/authStorage';
 import { isEmpty, map } from 'lodash';
 import dayjs from 'dayjs';
 
@@ -117,23 +121,7 @@ const CRITERIA_MODAL_BUTTON_STYLES = `
   }
 `;
 
-const getCurrentLevelValue = (record) => {
-  const val = record?.currentLevel;
-  if (val === undefined || val === null || val === 0) return 1;
-  const num = Number(val);
-  return Number.isFinite(num) ? num : 1;
-};
-
-const parseStoredUser = () => {
-  try {
-    const raw = localStorage.getItem('currentUser');
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    localStorage.removeItem('currentUser');
-    return null;
-  }
-};
+const getCurrentLevelValue = (record) => getCriteriaCurrentLevel(record);
 
 const normalizeCriteriaLevels = (levels) =>
   defaultLevel.map((defaultLvl) => {
@@ -256,34 +244,9 @@ const levelFilter = [
   },
 ];
 
-const deriveCurrentLevelFromLevels = (lvls) => {
-  if (!lvls || !Array.isArray(lvls) || lvls.length === 0) return 1;
-  const sorted = [...lvls].sort((a, b) => a.levelNumber - b.levelNumber);
-  const level1 = sorted.find((l) => l.levelNumber === 1);
-  const hasAnyLevel1Checked =
-    level1?.subCriterias?.length > 0 && level1.subCriterias.some((sc) => sc.status);
-
-  if (hasAnyLevel1Checked) {
-    return 1;
-  }
-
-  let current = 0;
-  for (const level of sorted) {
-    if (level.levelNumber === 1) continue;
-    if (!level.subCriterias?.length) break;
-    const allDone = level.subCriterias.every((sc) => sc.status);
-    if (allDone) {
-      current = level.levelNumber;
-    } else {
-      break;
-    }
-  }
-  return current > 0 ? current : 1;
-};
-
 const Categories = () => {
   const { initialState } = useModel('@@initialState');
-  const currentUser = initialState?.currentUser || parseStoredUser();
+  const currentUser = initialState?.currentUser || getStoredUser();
   const isCriteriaOfficer = currentUser?.role === 'criteria_officer';
   const isDepartmentHead = currentUser?.role === 'department';
   const canAdminCriteria = isContentAdmin(currentUser?.role);
@@ -1023,6 +986,7 @@ const Categories = () => {
 
   return (
     <PageContainer>
+      <CriteriaEvaluationGuide />
       <style>{`
         .criteria-row-inactive > td {
           text-decoration: line-through;

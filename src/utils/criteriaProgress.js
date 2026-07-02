@@ -8,9 +8,24 @@ export function normalizeCriteriaLevel(value) {
   return Math.min(5, Math.max(1, Math.round(num)));
 }
 
+export function normalizeCurrentLevel(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num) || num < 0) return 0;
+  return Math.min(5, Math.max(0, Math.round(num)));
+}
+
+function hasAnyCheckedSubcriteria(levels) {
+  if (!levels?.length) return false;
+  return levels.some((level) =>
+    level.subCriterias?.some((sc) => sc.status === true || sc.status === 'true'),
+  );
+}
+
 /** Cùng quy tắc deriveCurrentLevelFromLevels / Criteria.calculateCurrentLevel (BE). */
 export function deriveCurrentLevelFromLevels(lvls) {
-  if (!lvls || !Array.isArray(lvls) || lvls.length === 0) return 1;
+  if (!lvls || !Array.isArray(lvls) || lvls.length === 0) return 0;
+  if (!hasAnyCheckedSubcriteria(lvls)) return 0;
+
   const sorted = [...lvls].sort((a, b) => a.levelNumber - b.levelNumber);
   const level1 = sorted.find((l) => l.levelNumber === 1);
   const hasAnyLevel1Checked =
@@ -32,7 +47,7 @@ export function deriveCurrentLevelFromLevels(lvls) {
       break;
     }
   }
-  return current > 0 ? current : 1;
+  return current;
 }
 
 export function getCriteriaExpectedLevel(record) {
@@ -43,7 +58,7 @@ export function getCriteriaCurrentLevel(record) {
   if (record?.levels?.length) {
     return deriveCurrentLevelFromLevels(record.levels);
   }
-  return normalizeCriteriaLevel(record?.currentLevel);
+  return normalizeCurrentLevel(record?.currentLevel);
 }
 
 export function isCriteriaBelowExpectedLevel(record) {
@@ -90,8 +105,9 @@ export function getCriteriaProgressPercent(record) {
     return Math.min(100, Math.max(0, Math.round(Number(record.progress))));
   }
   const exp = Math.max(1, getCriteriaExpectedLevel(record));
-  let cur = getCriteriaCurrentLevel(record);
+  const cur = getCriteriaCurrentLevel(record);
   if (cur >= exp) return 100;
+  if (cur <= 0) return 0;
   return Math.min(100, Math.round((cur / exp) * 100));
 }
 

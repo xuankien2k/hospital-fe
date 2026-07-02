@@ -14,6 +14,7 @@ import React, { useState } from 'react';
 import { flushSync } from 'react-dom';
 import HeaderDropdown from '../HeaderDropdown';
 import axiosInstance from '../../utils/axiosInstance';
+import { clearAuthSession } from '../../utils/authStorage';
 import { isSystemAdmin } from '../../utils/roles';
 
 export type GlobalHeaderRightProps = {
@@ -65,8 +66,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
   const [form] = Form.useForm<ChangePasswordForm>();
 
   const loginOut = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('currentUser');
+    clearAuthSession();
 
     const { search, pathname } = window.location;
     if (pathname !== '/user/login') {

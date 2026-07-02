@@ -6,6 +6,7 @@ import React from 'react';
 import defaultSettings from '../config/defaultSettings';
 import { errorConfig } from './requestErrorConfig';
 import axiosInstance from '../src/utils/axiosInstance';
+import HospitalBrandBanner from './components/HospitalBrandBanner';
 
 const loginPath = '/user/login';
 
@@ -97,7 +98,18 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
     menuHeaderRender: undefined,
 
     childrenRender: (children) => {
-      return <>{children}</>;
+      const { location } = history;
+      if (location.pathname === loginPath) {
+        return <>{children}</>;
+      }
+      return (
+        <>
+          <div style={{ padding: '16px 24px 0' }}>
+            <HospitalBrandBanner />
+          </div>
+          {children}
+        </>
+      );
     },
 
     ...initialState?.settings,

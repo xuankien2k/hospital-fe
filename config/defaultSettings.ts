@@ -17,7 +17,7 @@ const Settings: ProLayoutProps & {
   colorWeak: false,
   title: 'Quản lý Bộ tiêu chí chất lượng bệnh viện',
   pwa: true,
-  logo: 'https://w.ladicdn.com/ladiui/icons/ld3-icons-heart-twotone.svg',
+  logo: '/hospital-logo.png',
   iconfontUrl: '',
   token: {
     // 参见ts声明，demo 见文档，通过token 修改样式

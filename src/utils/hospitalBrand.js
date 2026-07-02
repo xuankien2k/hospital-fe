@@ -1,0 +1,15 @@
+export const HOSPITAL_BRAND = {
+  logo: '/hospital-logo.png',
+  loginBanner: '/hospital-brand-banner.png',
+  hospitalName: 'BỆNH VIỆN ĐA KHOA BẮC NINH SỐ 1',
+  ownerUnit: 'bvdakhoabacninhso1',
+  address: 'Đường Lê Lợi, Phường Bắc Giang, Tỉnh Bắc\u00A0Ninh',
+  phone: '19000232',
+  email: 'tiepnhanthongtinbvdkbg@gmail.com',
+  appTitleLine1: 'QUẢN LÝ BỘ TIÊU CHÍ CHẤT LƯỢNG',
+  appTitleLine2: 'BỆNH VIỆN VIỆT NAM',
+  appVersion: 'PHIÊN BẢN 2.0',
+  qlContactPhone: '0969 820 804',
+  bannerBg: '#6ec1e8',
+  bannerText: '#ffffff',
+};

@@ -17,6 +17,7 @@ import { canFilterByDepartment } from '../../utils/departments';
 import { isContentAdmin } from '../../utils/roles';
 import { getLevelColorStyle } from '../../utils/criteriaLevelColors';
 import { BRAND_COLOR, BRAND_COLOR_LIGHT_BG } from '../../utils/brandColors';
+import { getCurrentUser as getStoredUser } from '../../utils/authStorage';
 
 const { Title, Text } = Typography;
 
@@ -717,19 +718,9 @@ const SummaryStatBlock = ({ label, value, tooltip, accent, background }) => (
   </div>
 );
 
-const parseStoredUser = () => {
-  try {
-    const raw = localStorage.getItem('currentUser');
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-};
-
 const Report = () => {
   const { initialState } = useModel('@@initialState');
-  const currentUser = initialState?.currentUser || parseStoredUser();
+  const currentUser = initialState?.currentUser || getStoredUser();
 
   const canFilterByAssignee = useMemo(() => {
     return isContentAdmin(currentUser?.role) || currentUser?.role === 'director';
@@ -756,7 +747,7 @@ const Report = () => {
 
   const [summary, setSummary] = useState(null);
   const [details, setDetails] = useState([]);
-  const [belowLevel3, setBelowLevel3] = useState([]);
+  const [belowLevel4, setBelowLevel4] = useState([]);
   const [matrix, setMatrix] = useState([]);
 
   /*
@@ -806,7 +797,7 @@ const Report = () => {
 
       setSummary(report.summary || null);
       setDetails(report.details || []);
-      setBelowLevel3(report.belowLevel3 || []);
+      setBelowLevel4(report.belowLevel4 || []);
       setMatrix(report.matrix || report.details || []);
     } catch (err) {
       message.error(err.message || 'Không tải được báo cáo');
@@ -1067,7 +1058,7 @@ const Report = () => {
     { title: 'Xếp hạng', dataIndex: 'rank', key: 'rankCol', width: 90 },
   ];
 
-  const belowLevel3Columns = [
+  const belowLevel4Columns = [
     { title: 'STT', key: 'stt', width: 60, render: (_, __, i) => i + 1 },
     { title: 'Mã', dataIndex: 'code', key: 'code', width: 100 },
     { title: 'Tên tiêu chí', dataIndex: 'name', key: 'name' },
@@ -1363,11 +1354,11 @@ const Report = () => {
       </Card>
 
       <Card style={REPORT_CARD_STYLE} styles={{ body: { padding: 28 } }} loading={loading}>
-        <ReportSectionTitle>IV. DANH SÁCH TIÊU CHÍ DƯỚI MỨC 3</ReportSectionTitle>
+        <ReportSectionTitle>IV. DANH SÁCH CÁC TIÊU CHÍ DƯỚI MỨC 4</ReportSectionTitle>
         <Table
           {...reportTableProps}
-          columns={belowLevel3Columns}
-          dataSource={belowLevel3}
+          columns={belowLevel4Columns}
+          dataSource={belowLevel4}
           rowKey="_id"
           pagination={{ pageSize: 20 }}
         />
@@ -1377,7 +1368,7 @@ const Report = () => {
         <ReportSectionTitle>V. CÁC TIÊU CHÍ CHƯA ĐẠT KẾ HOẠCH</ReportSectionTitle>
         <Table
           {...reportTableProps}
-          columns={belowLevel3Columns}
+          columns={belowLevel4Columns}
           dataSource={notAchievedCriteriaList}
           rowKey="_id"
           pagination={{ pageSize: 20 }}
