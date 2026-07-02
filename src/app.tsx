@@ -102,6 +102,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
       if (location.pathname === loginPath) {
         return <>{children}</>;
       }
+
       return (
         <>
           <div style={{ padding: '16px 24px 0' }}>

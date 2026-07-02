@@ -1132,13 +1132,6 @@ const Report = () => {
       width: 160,
       onCell: groupRowSpanCell,
     },
-    {
-      title: 'Ghi chú',
-      dataIndex: 'note',
-      key: 'note',
-      width: 140,
-      render: () => null,
-    },
   ];
 
   const matrixColumns = [
@@ -1322,25 +1315,29 @@ const Report = () => {
       </Card>
       */}
 
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          marginBottom: 16,
-        }}
-      >
-        <Button
-          type="primary"
-          icon={<DownloadOutlined />}
-          loading={exporting}
-          onClick={handleExportReport}
-        >
-          Xuất báo cáo Word
-        </Button>
-      </div>
-
       <Card style={REPORT_CARD_STYLE} styles={{ body: { padding: 28 } }} loading={loading}>
-        <ReportSectionTitle>I. TÓM TẮT KẾT QUẢ BỘ TIÊU CHÍ CHẤT LƯỢNG BỆNH VIỆN</ReportSectionTitle>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <ReportSectionTitle>
+            I. TÓM TẮT KẾT QUẢ BỘ TIÊU CHÍ CHẤT LƯỢNG BỆNH VIỆN
+          </ReportSectionTitle>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              marginBottom: 16,
+            }}
+          >
+            <Button
+              type="primary"
+              icon={<DownloadOutlined />}
+              loading={exporting}
+              onClick={handleExportReport}
+            >
+              Xuất báo cáo Word
+            </Button>
+          </div>
+        </div>
+
         <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
           {summaryStatBlocks.map((block) => (
             <Col key={block.label} xs={24} sm={12} md={6}>
@@ -1440,10 +1437,6 @@ const Report = () => {
 
       <Card style={REPORT_CARD_STYLE} styles={{ body: { padding: 28 } }} loading={loading}>
         <ReportSectionTitle>V. CÁC TIÊU CHÍ CHƯA ĐẠT KẾ HOẠCH</ReportSectionTitle>
-        <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-          Chi tiết các tiểu mục chưa hoàn thành. Cột Ghi chú để trống — người dùng tự nhập khi in
-          hoặc bổ sung ngoài hệ thống.
-        </Text>
         <Table
           {...reportTableProps}
           columns={notAchievedSubcriteriaColumns}
