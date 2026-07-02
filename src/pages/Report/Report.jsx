@@ -24,6 +24,16 @@ const { Title, Text } = Typography;
 const SHOW_SECTION_I_II_TABLES = false;
 const SHOW_SECTION_III_TABLE = false;
 
+const attachGroupRowSpan = (rows) =>
+  rows.map((row, index, arr) => {
+    const isFirst = index === 0 || arr[index - 1].criteriaId !== row.criteriaId;
+    const groupSize = isFirst ? arr.filter((item) => item.criteriaId === row.criteriaId).length : 0;
+    return {
+      ...row,
+      _rowSpan: isFirst ? groupSize : 0,
+    };
+  });
+
 const PART_LEVELS = [1, 2, 3, 4, 5];
 const DEPT_SCORE_MAX = 5;
 const DEPT_ROW_HEIGHT = 28;
@@ -748,6 +758,7 @@ const Report = () => {
   const [summary, setSummary] = useState(null);
   const [details, setDetails] = useState([]);
   const [belowLevel4, setBelowLevel4] = useState([]);
+  const [notAchievedSubcriteria, setNotAchievedSubcriteria] = useState([]);
   const [matrix, setMatrix] = useState([]);
 
   /*
@@ -798,6 +809,7 @@ const Report = () => {
       setSummary(report.summary || null);
       setDetails(report.details || []);
       setBelowLevel4(report.belowLevel4 || []);
+      setNotAchievedSubcriteria(report.notAchievedSubcriteria || []);
       setMatrix(report.matrix || report.details || []);
     } catch (err) {
       message.error(err.message || 'Không tải được báo cáo');
@@ -926,17 +938,10 @@ const Report = () => {
 
   const goalStatusCounts = useMemo(() => countCriteriaByGoalStatus(details), [details]);
 
-  const notAchievedCriteriaList = useMemo(() => {
-    const source = matrix.length ? matrix : details;
-    return source.filter(isCriteriaBelowExpectedLevel).map((c) => ({
-      _id: c._id,
-      code: c.code,
-      name: c.name,
-      currentLevel: getCriteriaCurrentLevel(c),
-      expectedLevel: getCriteriaExpectedLevel(c),
-      departmentName: c.departmentName,
-    }));
-  }, [matrix, details]);
+  const notAchievedSubcriteriaRows = useMemo(
+    () => attachGroupRowSpan(notAchievedSubcriteria),
+    [notAchievedSubcriteria],
+  );
 
   const excludedCodesText = summary?.excludedCodes?.length
     ? summary.excludedCodes.join(', ')
@@ -1065,6 +1070,75 @@ const Report = () => {
     { title: 'Mức đạt', dataIndex: 'currentLevel', key: 'currentLevel', width: 90 },
     { title: 'Mức dự kiến', dataIndex: 'expectedLevel', key: 'expectedLevel', width: 100 },
     { title: 'Khoa/Phòng', dataIndex: 'departmentName', key: 'departmentName', width: 160 },
+  ];
+
+  const groupRowSpanCell = (record) => ({
+    rowSpan: record._rowSpan ?? 1,
+  });
+
+  const notAchievedSubcriteriaColumns = [
+    {
+      title: 'Mã TC',
+      dataIndex: 'code',
+      key: 'code',
+      width: 120,
+      onCell: groupRowSpanCell,
+      render: (code, record) => (
+        <div>
+          <div style={{ fontWeight: 600 }}>{code}</div>
+          <div style={{ fontSize: 12, color: '#666' }}>{record.criteriaName}</div>
+        </div>
+      ),
+    },
+    {
+      title: 'Mức đạt hiện tại',
+      dataIndex: 'currentLevel',
+      key: 'currentLevel',
+      width: 120,
+      onCell: groupRowSpanCell,
+    },
+    {
+      title: 'Mức dự kiến',
+      dataIndex: 'expectedLevel',
+      key: 'expectedLevel',
+      width: 110,
+      onCell: groupRowSpanCell,
+    },
+    {
+      title: 'Tiểu mục chưa đạt',
+      dataIndex: 'subcriteriaText',
+      key: 'subcriteriaText',
+      render: (text, record) => {
+        const label = record.levelNumber ? `Mức ${record.levelNumber}: ${text}` : text;
+        const content = record.isDone ? `${label} (đã đạt)` : label;
+        if (record.highlightRed) {
+          return <span style={{ color: '#cf1322', fontWeight: 600 }}>{content}</span>;
+        }
+        return content;
+      },
+    },
+    {
+      title: 'Thời gian hoàn thành',
+      dataIndex: 'expectedLevelCompletionDate',
+      key: 'expectedLevelCompletionDate',
+      width: 140,
+      onCell: groupRowSpanCell,
+      render: (date) => (date ? dayjs(date).format('DD/MM/YYYY') : '-'),
+    },
+    {
+      title: 'Trách nhiệm',
+      dataIndex: 'departmentName',
+      key: 'departmentName',
+      width: 160,
+      onCell: groupRowSpanCell,
+    },
+    {
+      title: 'Ghi chú',
+      dataIndex: 'note',
+      key: 'note',
+      width: 140,
+      render: () => null,
+    },
   ];
 
   const matrixColumns = [
@@ -1366,11 +1440,17 @@ const Report = () => {
 
       <Card style={REPORT_CARD_STYLE} styles={{ body: { padding: 28 } }} loading={loading}>
         <ReportSectionTitle>V. CÁC TIÊU CHÍ CHƯA ĐẠT KẾ HOẠCH</ReportSectionTitle>
+        <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+          Chi tiết các tiểu mục chưa hoàn thành. Cột Ghi chú để trống — người dùng tự nhập khi in
+          hoặc bổ sung ngoài hệ thống.
+        </Text>
         <Table
           {...reportTableProps}
-          columns={belowLevel4Columns}
-          dataSource={notAchievedCriteriaList}
-          rowKey="_id"
+          columns={notAchievedSubcriteriaColumns}
+          dataSource={notAchievedSubcriteriaRows}
+          rowKey={(record) =>
+            `${record.criteriaId}-${record.levelNumber}-${record.groupIndex}-${record.stt}`
+          }
           pagination={{ pageSize: 20 }}
         />
       </Card>
