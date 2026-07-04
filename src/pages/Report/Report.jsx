@@ -1109,7 +1109,13 @@ const Report = () => {
       dataIndex: 'subcriteriaText',
       key: 'subcriteriaText',
       render: (text, record) => {
-        const label = record.levelNumber ? `Mức ${record.levelNumber}: ${text}` : text;
+        const orderPrefix =
+          record.subOrderNumber !== null && record.subOrderNumber !== undefined
+            ? `${record.subOrderNumber}.`
+            : '';
+        const label = record.levelNumber
+          ? `Mức ${record.levelNumber}: ${orderPrefix}${text}`
+          : `${orderPrefix}${text}`;
         const content = record.isDone ? `${label} (đã đạt)` : label;
         if (record.highlightRed) {
           return <span style={{ color: '#cf1322', fontWeight: 600 }}>{content}</span>;
