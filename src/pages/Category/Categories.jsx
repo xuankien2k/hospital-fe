@@ -36,7 +36,11 @@ import {
   deriveCurrentLevelFromLevels,
 } from '../../utils/criteriaProgress';
 import { canFilterByDepartment, getCriteriaDepartmentOptions } from '../../utils/departments';
-import { isContentAdmin, canCreateCriteria as roleCanCreateCriteria } from '../../utils/roles';
+import {
+  isContentAdmin,
+  canCreateCriteria as roleCanCreateCriteria,
+  isRestrictedCriteriaEditor as roleIsRestrictedCriteriaEditor,
+} from '../../utils/roles';
 import { LEVEL_COLORS, getLevelColorStyle } from '../../utils/criteriaLevelColors';
 import { BRAND_COLOR } from '../../utils/brandColors';
 import CriteriaEvaluationGuide from '../../components/CriteriaEvaluationGuide';
@@ -247,8 +251,8 @@ const levelFilter = [
 const Categories = () => {
   const { initialState } = useModel('@@initialState');
   const currentUser = initialState?.currentUser || getStoredUser();
-  const isCriteriaOfficer = currentUser?.role === 'criteria_officer';
   const isDepartmentHead = currentUser?.role === 'department';
+  const isRestrictedCriteriaEditor = roleIsRestrictedCriteriaEditor(currentUser?.role);
   const canAdminCriteria = isContentAdmin(currentUser?.role);
   const canCreateCriteria = roleCanCreateCriteria(currentUser?.role);
   const showDepartmentFilter = canFilterByDepartment(currentUser?.role);
@@ -419,6 +423,16 @@ const Categories = () => {
   };
 
   const handleSave = () => {
+    if (officerUpdateModalVisible) {
+      const data = {
+        _id: selectedId,
+        levels: [...levels],
+      };
+      updateCriteria(data, 'Cập nhật thành công');
+      closeAllModals();
+      return;
+    }
+
     form.validateFields().then((values) => {
       const data = {
         ...values,
@@ -713,10 +727,10 @@ const Categories = () => {
                 <Menu.Item
                   icon={<EditOutlined />}
                   onClick={() =>
-                    isCriteriaOfficer ? showOfficerUpdateModal(record) : showModal(record)
+                    isRestrictedCriteriaEditor ? showOfficerUpdateModal(record) : showModal(record)
                   }
                 >
-                  {isCriteriaOfficer ? 'Cập nhật' : 'Chỉnh sửa'}
+                  {isRestrictedCriteriaEditor ? 'Cập nhật' : 'Chỉnh sửa'}
                 </Menu.Item>
                 {canAdminCriteria && (
                   <Menu.Item
@@ -727,7 +741,7 @@ const Categories = () => {
                     Xóa
                   </Menu.Item>
                 )}
-                {!isCriteriaOfficer && (
+                {!isRestrictedCriteriaEditor && (
                   <Menu.Item
                     icon={record.status === false ? <CheckCircleOutlined /> : <StopOutlined />}
                     onClick={() => handleToggleCriteriaStatus(record)}
@@ -746,7 +760,7 @@ const Categories = () => {
   ];
 
   const listLevels = [1, 2, 3, 4, 5];
-  const renderCriteriaForm = (isOfficerUpdate = false) => (
+  const renderCriteriaForm = (isRestrictedUpdate = false) => (
     <Form form={form} layout="vertical">
       <style>
         {CRITERIA_LEVEL_COLLAPSE_STYLES}
@@ -758,21 +772,21 @@ const Categories = () => {
           label="Phần (VD: A)"
           rules={[{ required: true, message: 'Nhập Phần' }]}
         >
-          <Input size="large" disabled={isOfficerUpdate} />
+          <Input size="large" disabled={isRestrictedUpdate} />
         </Form.Item>
         <Form.Item
           name="chapter"
           label="Chương (VD: A1)"
           rules={[{ required: true, message: 'Nhập Chương' }]}
         >
-          <Input size="large" disabled={isOfficerUpdate} />
+          <Input size="large" disabled={isRestrictedUpdate} />
         </Form.Item>
         <Form.Item
           name="code"
           label="Mã tiêu chí (VD: A1.1)"
           rules={[{ required: true, message: 'Nhập mã tiêu chí' }]}
         >
-          <Input size="large" disabled={isOfficerUpdate} />
+          <Input size="large" disabled={isRestrictedUpdate} />
         </Form.Item>
       </Space>
 
@@ -781,10 +795,10 @@ const Categories = () => {
         label="Tên tiêu chí"
         rules={[{ required: true, message: 'Nhập tên tiêu chí' }]}
       >
-        <Input size="large" disabled={isOfficerUpdate} />
+        <Input size="large" disabled={isRestrictedUpdate} />
       </Form.Item>
 
-      {!isOfficerUpdate && (
+      {!isRestrictedUpdate && (
         <Form.Item
           name="departmentId"
           label="Khoa/Phòng"
@@ -806,7 +820,7 @@ const Categories = () => {
         </Form.Item>
       )}
 
-      {!isOfficerUpdate && (
+      {!isRestrictedUpdate && (
         <Form.Item label="Người phụ trách">
           <Select
             id="select-assigner"
@@ -827,7 +841,7 @@ const Categories = () => {
         <Form.Item name="expectedLevel" label="Mức dự kiến">
           <Select
             size="large"
-            disabled={isOfficerUpdate}
+            disabled={isRestrictedUpdate}
             options={[1, 2, 3, 4, 5].map((value) => ({
               value: value.toString(),
               label: value.toString(),
@@ -838,7 +852,7 @@ const Categories = () => {
           <DatePicker
             size="large"
             style={{ width: '100%' }}
-            disabled={isOfficerUpdate}
+            disabled={isRestrictedUpdate}
             value={expectedLevelCompletionDate ? dayjs(expectedLevelCompletionDate) : null}
             onChange={onChangeValueConditionDate}
             format={'DD/MM/YYYY'}
@@ -908,7 +922,9 @@ const Categories = () => {
                           rules={[{ required: true, message: 'Nhập tên tiểu mục' }]}
                           placeholder="Tên tiểu mục"
                           value={item.text}
+                          disabled={isRestrictedUpdate}
                           onChange={(e) => {
+                            if (isRestrictedUpdate) return;
                             const newSubCriterias = [...levels];
                             newSubCriterias[level - 1].subCriterias[index].text = e.target.value;
                             setLevels(newSubCriterias);
@@ -925,7 +941,7 @@ const Categories = () => {
                         >
                           <PlusOutlined /> Minh chứng
                         </Button>
-                        {!isOfficerUpdate && (
+                        {!isRestrictedUpdate && (
                           <Button
                             size="small"
                             className="criteria-btn-delete"
@@ -974,9 +990,14 @@ const Categories = () => {
                 })}
               </div>
 
-              <Button className="criteria-btn-add-subitem" onClick={() => handleAddSubItem(level)}>
-                + Thêm tiểu mục
-              </Button>
+              {!isRestrictedUpdate && (
+                <Button
+                  className="criteria-btn-add-subitem"
+                  onClick={() => handleAddSubItem(level)}
+                >
+                  + Thêm tiểu mục
+                </Button>
+              )}
             </Panel>
           );
         })}

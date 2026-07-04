@@ -12,4 +12,9 @@ export const canManageUsers = (role) => isContentAdmin(role) || role === 'depart
 
 export const canManageUsersFully = (role) => isContentAdmin(role);
 
-export const canCreateCriteria = (role) => isContentAdmin(role) || role === 'department';
+/** Vai trò chỉ được cập nhật minh chứng và tick hoàn thành tiểu mục */
+export const RESTRICTED_CRITERIA_EDITOR_ROLES = ['criteria_officer', 'department'];
+
+export const isRestrictedCriteriaEditor = (role) => RESTRICTED_CRITERIA_EDITOR_ROLES.includes(role);
+
+export const canCreateCriteria = (role) => isContentAdmin(role);
