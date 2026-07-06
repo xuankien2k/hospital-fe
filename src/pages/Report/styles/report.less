@@ -1,5 +1,5 @@
 .report-quality-page--mobile {
-  padding-bottom: 88px;
+  padding-bottom: 16px;
   margin: 0;
   width: 100%;
   padding-top: 0;
@@ -89,8 +89,17 @@
     min-height: 88px !important;
     padding: 12px !important;
 
+    &--highlight {
+      min-height: 96px !important;
+    }
+
     .report-mobile-stat-value {
       font-size: 24px !important;
+    }
+
+    &--highlight .report-mobile-stat-value {
+      font-size: 34px !important;
+      font-weight: 800 !important;
     }
   }
 
@@ -172,13 +181,45 @@
       }
     }
   }
+}
 
-  .report-mobile-export-fab {
-    position: fixed;
-    left: 8px;
-    right: 8px;
-    bottom: 12px;
-    z-index: 100;
-    padding-bottom: env(safe-area-inset-bottom, 0);
+.report-avg-score-badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: #f0f2ff;
+  border: 1px solid rgba(58, 74, 255, 0.22);
+  white-space: nowrap;
+
+  &__label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #595959;
+    letter-spacing: 0.02em;
+  }
+
+  &__value {
+    font-size: 20px;
+    font-weight: 800;
+    color: #3a4aff;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  &--compact {
+    padding: 5px 10px;
+
+    .report-avg-score-badge__value {
+      font-size: 18px;
+    }
+  }
+}
+
+.report-summary-stat--highlight {
+  .report-summary-stat__value--highlight {
+    font-size: 42px !important;
+    font-weight: 800 !important;
   }
 }

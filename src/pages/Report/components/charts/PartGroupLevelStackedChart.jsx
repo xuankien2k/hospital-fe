@@ -2,9 +2,17 @@ import React, { useMemo } from 'react';
 import { Tooltip, Typography } from 'antd';
 import { getLevelColorStyle } from '../../../../utils/criteriaLevelColors';
 import LevelLegend from './LevelLegend';
+import '../../styles/report.less';
 
 const { Text } = Typography;
 const PART_LEVELS = [1, 2, 3, 4, 5];
+
+const AvgScoreBadge = ({ value, compact = false }) => (
+  <span className={`report-avg-score-badge${compact ? ' report-avg-score-badge--compact' : ''}`}>
+    <span className="report-avg-score-badge__label">ĐTB</span>
+    <span className="report-avg-score-badge__value">{Number(value).toFixed(2)}</span>
+  </span>
+);
 
 const PartGroupLevelStackedChart = ({ data, compact = false }) => {
   const rows = useMemo(
@@ -136,13 +144,13 @@ const PartGroupLevelStackedChart = ({ data, compact = false }) => {
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
+                alignItems: 'center',
                 marginTop: 8,
-                fontSize: 12,
-                color: '#8c8c8c',
+                gap: 8,
               }}
             >
-              <span>{row.count} tiêu chí</span>
-              <span>ĐTB: {row.avgScore.toFixed(2)}</span>
+              <span style={{ fontSize: 12, color: '#8c8c8c' }}>{row.count} tiêu chí</span>
+              <AvgScoreBadge value={row.avgScore} compact />
             </div>
           </div>
         ))}
@@ -187,6 +195,9 @@ const PartGroupLevelStackedChart = ({ data, compact = false }) => {
               style={{ flex: 1, minWidth: 0, height: 50, display: 'flex', alignItems: 'center' }}
             >
               {renderBar(row)}
+            </div>
+            <div style={{ width: 88, flexShrink: 0, textAlign: 'right' }}>
+              <AvgScoreBadge value={row.avgScore} />
             </div>
             <div
               style={{

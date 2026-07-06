@@ -155,6 +155,37 @@
   }
 }
 
+.mobile-sticky-group-header {
+  position: sticky;
+  top: calc(52px + env(safe-area-inset-top, 0px));
+  z-index: 30;
+  width: 100%;
+  margin-bottom: 8px;
+  background: #f0f2f5;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  .mobile-group-header {
+    margin: 0;
+    border-radius: 0;
+
+    &--part {
+      border-radius: 8px 8px 0 0;
+    }
+
+    &--chapter {
+      border-radius: 0 0 8px 8px;
+    }
+
+    &:only-child {
+      border-radius: 8px;
+    }
+  }
+}
+
+.mobile-sticky-group-header-item:first-child .mobile-sticky-group-header {
+  margin-top: 0;
+}
+
 @media (max-width: 991px) {
   .mobile-page .ant-pro-page-container-children-content {
     padding: 0 !important;

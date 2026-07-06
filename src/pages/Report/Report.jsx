@@ -98,16 +98,19 @@ const GOAL_STATUS_THEMES = {
   failed: { accent: '#E61515', bg: '#fef2f2' },
 };
 
-const SummaryStatBlock = ({ label, value, tooltip, accent, background }) => (
+const SummaryStatBlock = ({ label, value, tooltip, accent, background, highlight = false }) => (
   <div
+    className={
+      highlight ? 'report-summary-stat report-summary-stat--highlight' : 'report-summary-stat'
+    }
     style={{
       background: background || '#fff',
-      border: `1px solid ${accent}33`,
+      border: highlight ? `2px solid ${accent}` : `1px solid ${accent}33`,
       borderRadius: 12,
-      padding: '20px 22px',
-      minHeight: 118,
+      padding: highlight ? '22px 24px' : '20px 22px',
+      minHeight: highlight ? 128 : 118,
       height: '100%',
-      boxShadow: `0 6px 20px ${accent}1f`,
+      boxShadow: highlight ? `0 8px 24px ${accent}33` : `0 6px 20px ${accent}1f`,
       transition: 'transform 0.2s ease, box-shadow 0.2s ease',
     }}
     onMouseEnter={(event) => {
@@ -128,8 +131,11 @@ const SummaryStatBlock = ({ label, value, tooltip, accent, background }) => (
       </Tooltip>
     </div>
     <div
+      className={
+        highlight ? 'report-summary-stat__value report-summary-stat__value--highlight' : undefined
+      }
       style={{
-        fontSize: 34,
+        fontSize: highlight ? 42 : 34,
         fontWeight: 700,
         color: accent,
         lineHeight: 1.15,
@@ -384,6 +390,7 @@ const Report = () => {
       label: 'Điểm trung bình',
       value: summary?.overallScore?.toFixed(2) || '0.00',
       tooltip: 'Điểm trung bình chung các tiêu chí được áp dụng đánh giá.',
+      highlight: true,
       ...SUMMARY_STAT_THEME,
     },
   ];
@@ -787,6 +794,7 @@ const Report = () => {
                 tooltip={block.tooltip}
                 accent={block.accent}
                 background={block.bg}
+                highlight={block.highlight}
               />
             </Col>
           ))}
@@ -800,6 +808,7 @@ const Report = () => {
                 tooltip={block.tooltip}
                 accent={block.accent}
                 background={block.bg}
+                highlight={block.highlight}
               />
             </Col>
           ))}

@@ -21,16 +21,18 @@ const SECTION_NAV = [
   { id: 'section-detail', label: 'Chi tiết' },
 ];
 
-const MobileStatBlock = ({ label, value, tooltip, accent, background }) => (
+const MobileStatBlock = ({ label, value, tooltip, accent, background, highlight = false }) => (
   <div
-    className="report-mobile-stat"
+    className={
+      highlight ? 'report-mobile-stat report-mobile-stat--highlight' : 'report-mobile-stat'
+    }
     style={{
       background: background || '#fff',
-      border: `1px solid ${accent}33`,
+      border: highlight ? `2px solid ${accent}` : `1px solid ${accent}33`,
       borderRadius: 12,
-      padding: '12px',
-      minHeight: 88,
-      boxShadow: `0 4px 12px ${accent}1f`,
+      padding: highlight ? '14px 12px' : '12px',
+      minHeight: highlight ? 96 : 88,
+      boxShadow: highlight ? `0 8px 20px ${accent}33` : `0 4px 12px ${accent}1f`,
     }}
   >
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
@@ -41,7 +43,13 @@ const MobileStatBlock = ({ label, value, tooltip, accent, background }) => (
     </div>
     <div
       className="report-mobile-stat-value"
-      style={{ fontSize: 28, fontWeight: 700, color: accent }}
+      style={{
+        fontSize: highlight ? 34 : 28,
+        fontWeight: 800,
+        color: accent,
+        lineHeight: 1.1,
+        letterSpacing: '-0.02em',
+      }}
     >
       {value}
     </div>
@@ -98,7 +106,7 @@ const ReportMobileView = ({
 
       <Row gutter={[8, 8]} style={{ marginBottom: 10 }}>
         {summaryStatBlocks.map((block) => (
-          <Col key={block.label} span={12}>
+          <Col key={block.label} span={block.highlight ? 24 : 12}>
             <MobileStatBlock {...block} />
           </Col>
         ))}
@@ -171,19 +179,6 @@ const ReportMobileView = ({
       </Title>
       <DetailCardList data={details} />
     </Card>
-
-    <div className="report-mobile-export-fab">
-      <Button
-        type="primary"
-        size="large"
-        block
-        icon={<DownloadOutlined />}
-        loading={exporting}
-        onClick={onExport}
-      >
-        Xuất báo cáo Word
-      </Button>
-    </div>
   </div>
 );
 

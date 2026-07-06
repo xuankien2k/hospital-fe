@@ -39,6 +39,54 @@ const CategoriesMobileView = ({
     [searchText, dateFilter.name, selectedLevel, departmentFilter],
   );
 
+  const mobileListItems = useMemo(() => {
+    const items = [];
+    let index = 0;
+
+    while (index < tableData.length) {
+      const record = tableData[index];
+
+      if (record.isPartHeader) {
+        const next = tableData[index + 1];
+        if (next?.isChapterHeader) {
+          items.push({
+            _id: next._id,
+            isStickyGroupHeader: true,
+            part: record.part,
+            chapter: next.chapter,
+          });
+          index += 2;
+          continue;
+        }
+
+        items.push({
+          _id: record._id,
+          isStickyGroupHeader: true,
+          part: record.part,
+          chapter: null,
+        });
+        index += 1;
+        continue;
+      }
+
+      if (record.isChapterHeader) {
+        items.push({
+          _id: record._id,
+          isStickyGroupHeader: true,
+          part: record.part,
+          chapter: record.chapter,
+        });
+        index += 1;
+        continue;
+      }
+
+      items.push(record);
+      index += 1;
+    }
+
+    return items;
+  }, [tableData]);
+
   return (
     <div className="mobile-page">
       <div className="criteria-evaluation-guide">
@@ -124,23 +172,23 @@ const CategoriesMobileView = ({
       </div>
 
       <List
-        dataSource={tableData}
+        dataSource={mobileListItems}
         renderItem={(record) => {
-          if (record.isPartHeader) {
+          if (record.isStickyGroupHeader) {
             return (
-              <List.Item style={{ padding: 0, border: 'none' }}>
-                <div className="mobile-group-header mobile-group-header--part">
-                  Phần {record.part}
-                </div>
-              </List.Item>
-            );
-          }
-
-          if (record.isChapterHeader) {
-            return (
-              <List.Item style={{ padding: 0, border: 'none' }}>
-                <div className="mobile-group-header mobile-group-header--chapter">
-                  Chương {record.chapter}
+              <List.Item
+                style={{ padding: 0, border: 'none' }}
+                className="mobile-sticky-group-header-item"
+              >
+                <div className="mobile-sticky-group-header">
+                  <div className="mobile-group-header mobile-group-header--part">
+                    Phần {record.part}
+                  </div>
+                  {record.chapter ? (
+                    <div className="mobile-group-header mobile-group-header--chapter">
+                      Chương {record.chapter}
+                    </div>
+                  ) : null}
                 </div>
               </List.Item>
             );
