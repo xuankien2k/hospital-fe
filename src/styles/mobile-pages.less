@@ -1,0 +1,355 @@
+.mobile-page {
+  width: 100%;
+}
+
+.mobile-page-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+
+  &__actions {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+
+  &__action-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid #e8e8e8;
+    border-radius: 10px;
+    background: #fafafa;
+  }
+
+  &__row {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+
+    .ant-input,
+    .ant-select {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  &__filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+
+    .ant-select {
+      width: 100% !important;
+    }
+
+    &--full {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+.mobile-list-card {
+  margin-bottom: 10px;
+  border-radius: 10px;
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+
+  .ant-card-body {
+    padding: 12px !important;
+  }
+
+  &--clickable {
+    cursor: pointer;
+
+    &:active {
+      background: #fafcff;
+    }
+  }
+
+  &--inactive {
+    opacity: 0.75;
+
+    .mobile-list-card__title {
+      text-decoration: line-through;
+    }
+  }
+
+  &__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  &__top-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__menu-btn {
+    flex-shrink: 0;
+    color: #8c8c8c !important;
+    margin: -4px -8px 0 0;
+  }
+
+  &__code {
+    font-size: 13px;
+    font-weight: 700;
+    color: #3a4aff;
+    margin-bottom: 4px;
+  }
+
+  &__title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #141414;
+    line-height: 1.4;
+    margin-bottom: 0;
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    font-size: 13px;
+    color: #595959;
+    margin-bottom: 8px;
+  }
+
+  &__meta-label {
+    color: #8c8c8c;
+  }
+}
+
+.mobile-group-header {
+  margin: 14px 0 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 700;
+
+  &--part {
+    background: #f0f0f0;
+    color: #141414;
+    font-size: 14px;
+    text-transform: uppercase;
+  }
+
+  &--chapter {
+    background: #f7fbff;
+    border-left: 4px solid #3a4aff;
+    color: #3a4aff;
+    font-size: 13px;
+  }
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 991px) {
+  .mobile-page .ant-pro-page-container-children-content {
+    padding: 0 !important;
+  }
+
+  .mobile-page .criteria-evaluation-guide {
+    margin-bottom: 12px;
+  }
+
+  .mobile-modal.ant-modal {
+    max-width: calc(100vw - 16px);
+    top: 8px;
+    padding-bottom: 0;
+  }
+
+  .mobile-modal .ant-modal-body {
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+  }
+
+  .mobile-modal .ant-space-horizontal {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 0 !important;
+
+    .ant-space-item {
+      width: 100%;
+    }
+  }
+
+  .mobile-modal .criteria-modal-form__meta-row {
+    width: 100%;
+
+    .ant-space-item {
+      width: 100%;
+    }
+
+    .ant-form-item {
+      width: 100%;
+      margin-bottom: 12px;
+    }
+  }
+
+  .mobile-modal .criteria-modal-form__level-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+
+    .ant-form-item {
+      width: 100%;
+      margin-bottom: 12px;
+    }
+  }
+
+  .mobile-modal .criteria-modal-form__levels-title {
+    margin: 8px 0 12px;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  .mobile-modal .criteria-level-panel__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .mobile-modal .criteria-level-panel__complete .ant-checkbox-wrapper {
+    font-size: 12px;
+    white-space: normal;
+  }
+
+  .criteria-subitem-mobile {
+    margin-bottom: 12px;
+    padding: 12px;
+    border: 1px solid #f0f0f0;
+    border-radius: 10px;
+    background: #fff;
+  }
+
+  .criteria-subitem-mobile__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .criteria-subitem-mobile__no {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 8px;
+    border-radius: 8px;
+    background: #f0f2ff;
+    color: #3a4aff;
+    font-weight: 700;
+    font-size: 13px;
+  }
+
+  .criteria-subitem-mobile__text {
+    width: 100%;
+  }
+
+  .criteria-subitem-mobile__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+
+    .criteria-btn-evidence--compact {
+      flex: 0 0 auto;
+      width: auto;
+      min-width: 132px;
+      padding-inline: 12px;
+    }
+
+    .criteria-btn-delete--icon {
+      flex: 0 0 auto;
+      width: 32px;
+      min-width: 32px;
+      height: 32px;
+      padding: 0;
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  .criteria-subitem-mobile__evidences {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #f0f0f0;
+  }
+
+  .criteria-subitem-evidence-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .criteria-subitem-evidence-link {
+    flex: 1;
+    min-width: 0;
+    word-break: break-all;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+}
+
+@media (min-width: 992px) {
+  .criteria-subitem-evidences {
+    margin-top: 8px;
+    margin-left: 34px;
+  }
+
+  .criteria-subitem-evidence-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .criteria-subitem-evidence-link {
+    width: 300px;
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .criteria-modal-form__level-row {
+    margin-top: 8px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    width: 100%;
+  }
+
+  .criteria-modal-form__levels-title {
+    margin-top: 16px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    font-size: 20px;
+  }
+
+  .criteria-level-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+}

@@ -7,6 +7,7 @@ import defaultSettings from '../config/defaultSettings';
 import { errorConfig } from './requestErrorConfig';
 import axiosInstance from '../src/utils/axiosInstance';
 import HospitalBrandBanner from './components/HospitalBrandBanner';
+import MobileNavBar from './components/MobileNavBar';
 
 const loginPath = '/user/login';
 
@@ -105,10 +106,11 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
 
       return (
         <>
-          <div style={{ padding: '16px 24px 0' }}>
+          <MobileNavBar />
+          <div className="app-layout-banner-wrap">
             <HospitalBrandBanner />
           </div>
-          {children}
+          <div className="app-layout-main-content">{children}</div>
         </>
       );
     },

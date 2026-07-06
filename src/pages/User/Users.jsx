@@ -13,11 +13,14 @@ import {
 } from '@ant-design/icons';
 import axiosInstance from '../../utils/axiosInstance';
 import { getCurrentUser as getStoredUser } from '../../utils/authStorage';
+import { useCompactBreakpoint } from '../../hooks/useCompactBreakpoint';
 import { canManageUsersFully, isSystemAdmin } from '../../utils/roles';
+import UsersMobileView from './components/mobile/UsersMobileView';
 
 const { Option } = Select;
 
 const Users = () => {
+  const { isDesktop } = useCompactBreakpoint();
   const { initialState } = useModel('@@initialState');
   const currentUser = initialState?.currentUser || getStoredUser();
   const canManageUsers = canManageUsersFully(currentUser?.role);
@@ -206,128 +209,150 @@ const Users = () => {
     },
   ];
 
-  return (
-    <PageContainer>
-      {/* Search and Action Buttons */}
-      <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
-        <Input
-          size="large"
-          placeholder="Tìm kiếm theo tên"
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          onPressEnter={handleSearch}
-          style={{ width: 300 }}
-        />
-        <Button type="primary" icon={<SearchOutlined />} size="large" onClick={handleSearch}>
-          Tìm kiếm
-        </Button>
-        {canManageUsers && (
-          <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => showModal()}>
-            Thêm
+  const modalWidth = isDesktop ? 520 : '100%';
+  const modalClassName = isDesktop ? undefined : 'mobile-modal';
+
+  const userModal = (
+    <Modal
+      title={editData ? 'Chỉnh sửa người dùng' : 'Thêm người dùng'}
+      open={modalVisible}
+      onCancel={() => setModalVisible(false)}
+      onOk={handleSave}
+      width={modalWidth}
+      className={modalClassName}
+    >
+      <Form form={form} layout="vertical" initialValues={{ role: 'criteria_officer' }}>
+        <Form.Item
+          name="username"
+          label="Tên người dùng"
+          rules={[{ required: true, message: 'Nhập Tên người dùng' }]}
+        >
+          <Input size="large" />
+        </Form.Item>
+
+        <Form.Item
+          name="departmentId"
+          label="Khoa/Phòng"
+          rules={[{ required: true, message: 'Chọn khoa/phòng' }]}
+        >
+          <Select size="large" placeholder="Chọn khoa/phòng" showSearch optionFilterProp="children">
+            {departments.map((dept) => (
+              <Option key={dept._id} value={dept._id}>
+                {dept.name}
+              </Option>
+            ))}
+          </Select>
+        </Form.Item>
+
+        <Form.Item
+          name="email"
+          label="Email"
+          rules={[{ required: true, type: 'email', message: 'Nhập email hợp lệ' }]}
+        >
+          <Input size="large" disabled={!!editData} />
+        </Form.Item>
+
+        <Form.Item name="role" label="Vai trò">
+          <Select size="large">
+            <Option value="admin">Quản trị viên (Admin)</Option>
+            <Option value="director">Ban Giám đốc</Option>
+            <Option value="quality_admin">Phòng Quản lý chất lượng</Option>
+            <Option value="department">Trưởng Khoa/Phòng/Trung tâm</Option>
+            <Option value="criteria_officer">Cán bộ phụ trách tiêu chí</Option>
+          </Select>
+        </Form.Item>
+
+        {editData && (
+          <Button onClick={handleChangePassword} style={{ marginBottom: 8, marginTop: 8 }}>
+            Sửa mật khẩu
           </Button>
         )}
-      </div>
 
-      {/* Users Table */}
-      <ProTable
-        columns={columns}
-        dataSource={data}
-        rowKey="_id"
-        search={false}
-        pagination={{ pageSize: 200 }}
-        loading={loading}
-      />
-
-      {/* Add/Edit User Modal */}
-      <Modal
-        title={editData ? 'Chỉnh sửa người dùng' : 'Thêm người dùng'}
-        open={modalVisible}
-        onCancel={() => setModalVisible(false)}
-        onOk={handleSave}
-      >
-        <Form form={form} layout="vertical" initialValues={{ role: 'criteria_officer' }}>
-          <Form.Item
-            name="username"
-            label="Tên người dùng"
-            rules={[{ required: true, message: 'Nhập Tên người dùng' }]}
-          >
-            <Input size="large" />
-          </Form.Item>
-
-          <Form.Item
-            name="departmentId"
-            label="Khoa/Phòng"
-            rules={[{ required: true, message: 'Chọn khoa/phòng' }]}
-          >
-            <Select
-              size="large"
-              placeholder="Chọn khoa/phòng"
-              showSearch
-              optionFilterProp="children"
+        {(!editData || isChangePassword) && (
+          <>
+            <Form.Item
+              name="password"
+              label="Mật khẩu"
+              rules={[{ required: true, message: 'Nhập mật khẩu' }]}
             >
-              {departments.map((dept) => (
-                <Option key={dept._id} value={dept._id}>
-                  {dept.name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
+              <Input.Password size="large" />
+            </Form.Item>
 
-          <Form.Item
-            name="email"
-            label="Email"
-            rules={[{ required: true, type: 'email', message: 'Nhập email hợp lệ' }]}
-          >
-            <Input size="large" disabled={!!editData} />
-          </Form.Item>
+            <Form.Item
+              name="confirmPassword"
+              label="Xác nhận mật khẩu"
+              dependencies={['password']}
+              rules={[
+                { required: true, message: 'Xác nhận mật khẩu' },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    return value && value === getFieldValue('password')
+                      ? Promise.resolve()
+                      : Promise.reject(new Error('Mật khẩu không khớp!'));
+                  },
+                }),
+              ]}
+            >
+              <Input.Password size="large" />
+            </Form.Item>
+          </>
+        )}
+      </Form>
+    </Modal>
+  );
 
-          <Form.Item name="role" label="Vai trò">
-            <Select size="large">
-              <Option value="admin">Quản trị viên (Admin)</Option>
-              <Option value="director">Ban Giám đốc</Option>
-              <Option value="quality_admin">Phòng Quản lý chất lượng</Option>
-              <Option value="department">Trưởng Khoa/Phòng/Trung tâm</Option>
-              <Option value="criteria_officer">Cán bộ phụ trách tiêu chí</Option>
-            </Select>
-          </Form.Item>
-
-          {editData && (
-            <Button onClick={handleChangePassword} style={{ marginBottom: 8, marginTop: 8 }}>
-              Sửa mật khẩu
+  return (
+    <PageContainer pageHeaderRender={isDesktop ? undefined : false}>
+      {isDesktop ? (
+        <>
+          <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+            <Input
+              size="large"
+              placeholder="Tìm kiếm theo tên"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              onPressEnter={handleSearch}
+              style={{ width: 300 }}
+            />
+            <Button type="primary" icon={<SearchOutlined />} size="large" onClick={handleSearch}>
+              Tìm kiếm
             </Button>
-          )}
-
-          {(!editData || isChangePassword) && (
-            <>
-              <Form.Item
-                name="password"
-                label="Mật khẩu"
-                rules={[{ required: true, message: 'Nhập mật khẩu' }]}
+            {canManageUsers && (
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                size="large"
+                onClick={() => showModal()}
               >
-                <Input.Password size="large" />
-              </Form.Item>
+                Thêm
+              </Button>
+            )}
+          </div>
 
-              <Form.Item
-                name="confirmPassword"
-                label="Xác nhận mật khẩu"
-                dependencies={['password']}
-                rules={[
-                  { required: true, message: 'Xác nhận mật khẩu' },
-                  ({ getFieldValue }) => ({
-                    validator(_, value) {
-                      return value && value === getFieldValue('password')
-                        ? Promise.resolve()
-                        : Promise.reject(new Error('Mật khẩu không khớp!'));
-                    },
-                  }),
-                ]}
-              >
-                <Input.Password size="large" />
-              </Form.Item>
-            </>
-          )}
-        </Form>
-      </Modal>
+          <ProTable
+            columns={columns}
+            dataSource={data}
+            rowKey="_id"
+            search={false}
+            pagination={{ pageSize: 200 }}
+            loading={loading}
+          />
+        </>
+      ) : (
+        <UsersMobileView
+          data={data}
+          loading={loading}
+          searchText={searchText}
+          onSearchTextChange={setSearchText}
+          onSearch={handleSearch}
+          canManageUsers={canManageUsers}
+          onCreate={() => showModal()}
+          onEdit={showModal}
+          onDelete={deleteUser}
+        />
+      )}
+
+      {userModal}
     </PageContainer>
   );
 };

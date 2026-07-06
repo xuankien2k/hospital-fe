@@ -44,6 +44,9 @@ import {
 import { LEVEL_COLORS, getLevelColorStyle } from '../../utils/criteriaLevelColors';
 import { BRAND_COLOR } from '../../utils/brandColors';
 import CriteriaEvaluationGuide from '../../components/CriteriaEvaluationGuide';
+import { useCompactBreakpoint } from '../../hooks/useCompactBreakpoint';
+import CategoriesMobileView from './components/mobile/CategoriesMobileView';
+import '../../styles/mobile-pages.less';
 import { getCurrentUser as getStoredUser } from '../../utils/authStorage';
 import { isEmpty, map } from 'lodash';
 import dayjs from 'dayjs';
@@ -249,6 +252,7 @@ const levelFilter = [
 ];
 
 const Categories = () => {
+  const { isDesktop } = useCompactBreakpoint();
   const { initialState } = useModel('@@initialState');
   const currentUser = initialState?.currentUser || getStoredUser();
   const isDepartmentHead = currentUser?.role === 'department';
@@ -760,130 +764,252 @@ const Categories = () => {
   ];
 
   const listLevels = [1, 2, 3, 4, 5];
+
+  const renderEvidenceLinks = (level, index, evidences) => {
+    if (!Array.isArray(evidences) || evidences.length === 0) return null;
+
+    return (
+      <div
+        className={isDesktop ? 'criteria-subitem-evidences' : 'criteria-subitem-mobile__evidences'}
+      >
+        {evidences.map((link, evidenceIndex) => (
+          <div key={`evidence-${evidenceIndex}`} className="criteria-subitem-evidence-row">
+            <a
+              href={link}
+              target="_blank"
+              rel="noreferrer"
+              className="criteria-subitem-evidence-link"
+            >
+              {link}
+            </a>
+            <Button
+              size="small"
+              danger
+              type="link"
+              onClick={() => handleDeleteEvidence(level, index, evidenceIndex)}
+            >
+              Xóa
+            </Button>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderSubCriteriaItem = (level, item, index, orderNumber, isRestrictedUpdate) => {
+    if (isDesktop) {
+      return (
+        <div key={index} style={{ marginBottom: 16 }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: 16,
+              alignItems: 'center',
+            }}
+          >
+            <div>{orderNumber}</div>
+            <TextArea
+              autoSize
+              placeholder="Tên tiểu mục"
+              value={item.text}
+              disabled={isRestrictedUpdate}
+              onChange={(e) => {
+                if (isRestrictedUpdate) return;
+                const newSubCriterias = [...levels];
+                newSubCriterias[level - 1].subCriterias[index].text = e.target.value;
+                setLevels(newSubCriterias);
+              }}
+            />
+            <Checkbox checked={item.status} onChange={() => handleChangeStatus(level, index)} />
+            <Button
+              size="small"
+              className="criteria-btn-evidence"
+              onClick={() => openEvidenceModal(level, index)}
+            >
+              <PlusOutlined /> Minh chứng
+            </Button>
+            {!isRestrictedUpdate && (
+              <Button
+                size="small"
+                className="criteria-btn-delete"
+                onClick={() => handleDeleteSubItem(level, index)}
+              >
+                <DeleteOutlined /> Xóa
+              </Button>
+            )}
+          </div>
+          {renderEvidenceLinks(level, index, item.evidences)}
+        </div>
+      );
+    }
+
+    return (
+      <div key={index} className="criteria-subitem-mobile">
+        <div className="criteria-subitem-mobile__head">
+          <span className="criteria-subitem-mobile__no">{orderNumber}</span>
+          <Checkbox checked={item.status} onChange={() => handleChangeStatus(level, index)}>
+            Đạt
+          </Checkbox>
+        </div>
+        <TextArea
+          autoSize={{ minRows: 2, maxRows: 8 }}
+          placeholder="Tên tiểu mục"
+          value={item.text}
+          disabled={isRestrictedUpdate}
+          className="criteria-subitem-mobile__text"
+          onChange={(e) => {
+            if (isRestrictedUpdate) return;
+            const newSubCriterias = [...levels];
+            newSubCriterias[level - 1].subCriterias[index].text = e.target.value;
+            setLevels(newSubCriterias);
+          }}
+        />
+        <div className="criteria-subitem-mobile__actions">
+          <Button
+            size="small"
+            className="criteria-btn-evidence criteria-btn-evidence--compact"
+            onClick={() => openEvidenceModal(level, index)}
+          >
+            <PlusOutlined /> Minh chứng
+          </Button>
+          {!isRestrictedUpdate && (
+            <Button
+              size="small"
+              className="criteria-btn-delete criteria-btn-delete--icon"
+              icon={<DeleteOutlined />}
+              aria-label="Xóa tiểu mục"
+              onClick={() => handleDeleteSubItem(level, index)}
+            />
+          )}
+        </div>
+        {renderEvidenceLinks(level, index, item.evidences)}
+      </div>
+    );
+  };
+
   const renderCriteriaForm = (isRestrictedUpdate = false) => (
-    <Form form={form} layout="vertical">
+    <Form form={form} layout="vertical" className="criteria-modal-form">
       <style>
         {CRITERIA_LEVEL_COLLAPSE_STYLES}
         {CRITERIA_MODAL_BUTTON_STYLES}
       </style>
-      <Space direction="horizontal">
-        <Form.Item
-          name="part"
-          label="Phần (VD: A)"
-          rules={[{ required: true, message: 'Nhập Phần' }]}
-        >
-          <Input size="large" disabled={isRestrictedUpdate} />
-        </Form.Item>
-        <Form.Item
-          name="chapter"
-          label="Chương (VD: A1)"
-          rules={[{ required: true, message: 'Nhập Chương' }]}
-        >
-          <Input size="large" disabled={isRestrictedUpdate} />
-        </Form.Item>
-        <Form.Item
-          name="code"
-          label="Mã tiêu chí (VD: A1.1)"
-          rules={[{ required: true, message: 'Nhập mã tiêu chí' }]}
-        >
-          <Input size="large" disabled={isRestrictedUpdate} />
-        </Form.Item>
-      </Space>
-
-      <Form.Item
-        name="name"
-        label="Tên tiêu chí"
-        rules={[{ required: true, message: 'Nhập tên tiêu chí' }]}
-      >
-        <Input size="large" disabled={isRestrictedUpdate} />
-      </Form.Item>
-
-      {!isRestrictedUpdate && (
-        <Form.Item
-          name="departmentId"
-          label="Khoa/Phòng"
-          rules={[{ required: true, message: 'Chọn khoa/phòng' }]}
-        >
-          <Select
-            size="large"
-            placeholder="Chọn khoa/phòng"
-            showSearch
-            optionFilterProp="children"
-            disabled={isDepartmentHead}
+      {(!isRestrictedUpdate || isDesktop) && (
+        <>
+          <Space
+            direction={isDesktop ? 'horizontal' : 'vertical'}
+            className="criteria-modal-form__meta-row"
           >
-            {criteriaDepartmentOptions.map((dept) => (
-              <Option key={dept._id} value={dept._id}>
-                {dept.name}
-              </Option>
-            ))}
-          </Select>
-        </Form.Item>
+            <Form.Item
+              name="part"
+              label="Phần (VD: A)"
+              rules={[{ required: true, message: 'Nhập Phần' }]}
+            >
+              <Input size="large" disabled={isRestrictedUpdate} />
+            </Form.Item>
+            <Form.Item
+              name="chapter"
+              label="Chương (VD: A1)"
+              rules={[{ required: true, message: 'Nhập Chương' }]}
+            >
+              <Input size="large" disabled={isRestrictedUpdate} />
+            </Form.Item>
+            <Form.Item
+              name="code"
+              label="Mã tiêu chí (VD: A1.1)"
+              rules={[{ required: true, message: 'Nhập mã tiêu chí' }]}
+            >
+              <Input size="large" disabled={isRestrictedUpdate} />
+            </Form.Item>
+          </Space>
+
+          <Form.Item
+            name="name"
+            label="Tên tiêu chí"
+            rules={[{ required: true, message: 'Nhập tên tiêu chí' }]}
+          >
+            <Input size="large" disabled={isRestrictedUpdate} />
+          </Form.Item>
+
+          {!isRestrictedUpdate && (
+            <Form.Item
+              name="departmentId"
+              label="Khoa/Phòng"
+              rules={[{ required: true, message: 'Chọn khoa/phòng' }]}
+            >
+              <Select
+                size="large"
+                placeholder="Chọn khoa/phòng"
+                showSearch
+                optionFilterProp="children"
+                disabled={isDepartmentHead}
+              >
+                {criteriaDepartmentOptions.map((dept) => (
+                  <Option key={dept._id} value={dept._id}>
+                    {dept.name}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          )}
+
+          {!isRestrictedUpdate && (
+            <Form.Item label="Người phụ trách">
+              <Select
+                id="select-assigner"
+                size="large"
+                value={assignedUser?._id}
+                onChange={handleChangeAssigner}
+              >
+                {listUsers.map((user, index) => (
+                  <Option value={user._id} key={index}>
+                    {user.username}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          )}
+
+          <div className="criteria-modal-form__level-row">
+            <Form.Item name="expectedLevel" label="Mức dự kiến">
+              <Select
+                size="large"
+                disabled={isRestrictedUpdate}
+                options={[1, 2, 3, 4, 5].map((value) => ({
+                  value: value.toString(),
+                  label: value.toString(),
+                }))}
+              />
+            </Form.Item>
+            <Form.Item label="Ngày hoàn thành mức dự kiến">
+              <DatePicker
+                size="large"
+                style={{ width: '100%' }}
+                disabled={isRestrictedUpdate}
+                value={expectedLevelCompletionDate ? dayjs(expectedLevelCompletionDate) : null}
+                onChange={onChangeValueConditionDate}
+                format={'DD/MM/YYYY'}
+              />
+            </Form.Item>
+          </div>
+        </>
       )}
 
-      {!isRestrictedUpdate && (
-        <Form.Item label="Người phụ trách">
-          <Select
-            id="select-assigner"
-            size="large"
-            value={assignedUser?._id}
-            onChange={handleChangeAssigner}
-          >
-            {listUsers.map((user, index) => (
-              <Option value={user._id} key={index}>
-                {user.username}
-              </Option>
-            ))}
-          </Select>
-        </Form.Item>
-      )}
-
-      <div style={{ marginTop: 8, display: 'flex', gap: 16, alignItems: 'center', width: '100%' }}>
-        <Form.Item name="expectedLevel" label="Mức dự kiến">
-          <Select
-            size="large"
-            disabled={isRestrictedUpdate}
-            options={[1, 2, 3, 4, 5].map((value) => ({
-              value: value.toString(),
-              label: value.toString(),
-            }))}
-          />
-        </Form.Item>
-        <Form.Item label="Ngày hoàn thành mức dự kiến">
-          <DatePicker
-            size="large"
-            style={{ width: '100%' }}
-            disabled={isRestrictedUpdate}
-            value={expectedLevelCompletionDate ? dayjs(expectedLevelCompletionDate) : null}
-            onChange={onChangeValueConditionDate}
-            format={'DD/MM/YYYY'}
-          />
-        </Form.Item>
-      </div>
-
-      <div style={{ marginTop: 16, marginBottom: 16, fontWeight: 600, fontSize: 20 }}>
+      <div className="criteria-modal-form__levels-title">
         {`Danh sách tiểu mục (Mức hiện tại: ${derivedCurrentLevel})`}
       </div>
 
-      <Collapse defaultActiveKey={['1', '2', '3', '4', '5']}>
+      <Collapse defaultActiveKey={isDesktop ? ['1', '2', '3', '4', '5'] : ['1', '2']}>
         {listLevels.map((level) => {
           const levelStyle = getLevelColorStyle(level);
           return (
             <Panel
               className={`criteria-level-panel criteria-level-panel-${level}`}
               header={
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 12,
-                    color: levelStyle.color,
-                  }}
-                >
+                <div className="criteria-level-panel__header" style={{ color: levelStyle.color }}>
                   <span style={{ fontWeight: 700, color: levelStyle.color }}>{`Mức ${level}`}</span>
                   <div
                     onClick={(e) => e.stopPropagation()}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+                    className="criteria-level-panel__complete"
                   >
                     <Checkbox
                       checked={
@@ -892,7 +1018,7 @@ const Categories = () => {
                         levels[level - 1].subCriterias.every((subItem) => subItem.status)
                       }
                       onChange={(e) => handleToggleLevelStatus(level, e.target.checked)}
-                      style={{ marginRight: 8, color: 'inherit' }}
+                      style={{ color: 'inherit' }}
                     >
                       Hoàn thành mức
                     </Checkbox>
@@ -907,85 +1033,12 @@ const Categories = () => {
                     .slice(0, level - 1)
                     .reduce((acc, curr) => acc + (curr?.subCriterias?.length || 0), 0);
 
-                  return (
-                    <div key={index} style={{ marginBottom: 16 }}>
-                      <div
-                        style={{
-                          display: 'flex',
-                          gap: 16,
-                          alignItems: 'center',
-                        }}
-                      >
-                        <div>{currentNum + index + 1}</div>
-                        <TextArea
-                          autoSize
-                          rules={[{ required: true, message: 'Nhập tên tiểu mục' }]}
-                          placeholder="Tên tiểu mục"
-                          value={item.text}
-                          disabled={isRestrictedUpdate}
-                          onChange={(e) => {
-                            if (isRestrictedUpdate) return;
-                            const newSubCriterias = [...levels];
-                            newSubCriterias[level - 1].subCriterias[index].text = e.target.value;
-                            setLevels(newSubCriterias);
-                          }}
-                        />
-                        <Checkbox
-                          checked={item.status}
-                          onChange={() => handleChangeStatus(level, index)}
-                        />
-                        <Button
-                          size="small"
-                          className="criteria-btn-evidence"
-                          onClick={() => openEvidenceModal(level, index)}
-                        >
-                          <PlusOutlined /> Minh chứng
-                        </Button>
-                        {!isRestrictedUpdate && (
-                          <Button
-                            size="small"
-                            className="criteria-btn-delete"
-                            onClick={() => handleDeleteSubItem(level, index)}
-                          >
-                            <DeleteOutlined /> Xóa
-                          </Button>
-                        )}
-                      </div>
-                      {Array.isArray(item.evidences) && item.evidences.length > 0 && (
-                        <div style={{ marginTop: 8, marginLeft: 34 }}>
-                          {item.evidences.map((link, evidenceIndex) => (
-                            <div
-                              key={`evidence-${evidenceIndex}`}
-                              style={{ display: 'flex', alignItems: 'center', gap: 8 }}
-                            >
-                              <a
-                                href={link}
-                                target="_blank"
-                                rel="noreferrer"
-                                style={{
-                                  width: 300,
-                                  display: 'inline-block',
-                                  overflowWrap: 'break-word',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
-                                {link}
-                              </a>
-                              <Button
-                                size="small"
-                                danger
-                                type="link"
-                                onClick={() => handleDeleteEvidence(level, index, evidenceIndex)}
-                              >
-                                Xóa
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                  return renderSubCriteriaItem(
+                    level,
+                    item,
+                    index,
+                    currentNum + index + 1,
+                    isRestrictedUpdate,
                   );
                 })}
               </div>
@@ -993,6 +1046,7 @@ const Categories = () => {
               {!isRestrictedUpdate && (
                 <Button
                   className="criteria-btn-add-subitem"
+                  block={!isDesktop}
                   onClick={() => handleAddSubItem(level)}
                 >
                   + Thêm tiểu mục
@@ -1005,8 +1059,11 @@ const Categories = () => {
     </Form>
   );
 
-  return (
-    <PageContainer>
+  const modalWidth = isDesktop ? 900 : '100%';
+  const modalClassName = isDesktop ? undefined : 'mobile-modal';
+
+  const desktopView = (
+    <>
       <CriteriaEvaluationGuide />
       <style>{`
         .criteria-row-inactive > td {
@@ -1126,9 +1183,14 @@ const Categories = () => {
           return record.status === false ? 'criteria-row-inactive' : '';
         }}
       />
+    </>
+  );
 
+  const criteriaModals = (
+    <>
       <Modal
-        width={900}
+        width={modalWidth}
+        className={modalClassName}
         title={editData ? 'Chỉnh sửa tiêu chí' : 'Thêm tiêu chí'}
         open={modalVisible}
         onCancel={closeAllModals}
@@ -1138,7 +1200,8 @@ const Categories = () => {
       </Modal>
 
       <Modal
-        width={900}
+        width={modalWidth}
+        className={modalClassName}
         title="Cập nhật tiêu chí"
         open={officerUpdateModalVisible}
         onCancel={closeAllModals}
@@ -1152,7 +1215,8 @@ const Categories = () => {
         open={evidenceModalVisible}
         onCancel={() => setEvidenceModalVisible(false)}
         onOk={handleAddEvidence}
-        width={500}
+        width={isDesktop ? 500 : '100%'}
+        className={modalClassName}
       >
         <Input
           placeholder="Nhập link minh chứng"
@@ -1160,6 +1224,40 @@ const Categories = () => {
           onChange={(e) => setEvidenceLink(e.target.value)}
         />
       </Modal>
+    </>
+  );
+
+  return (
+    <PageContainer pageHeaderRender={isDesktop ? undefined : false}>
+      {isDesktop ? (
+        desktopView
+      ) : (
+        <CategoriesMobileView
+          tableData={tableData}
+          searchText={searchText}
+          onSearchTextChange={setSearchText}
+          onSearch={handleSearch}
+          canCreateCriteria={canCreateCriteria}
+          onCreate={() => showModal(null)}
+          dateFilter={dateFilter}
+          onDateFilterChange={handleChangeDateFilter}
+          outOfDateFilter={outOfDateFilter}
+          selectedLevel={selectedLevel}
+          onLevelFilterChange={handleChangeLevelFilter}
+          levelFilter={levelFilter}
+          showDepartmentFilter={showDepartmentFilter}
+          departmentFilter={departmentFilter}
+          onDepartmentFilterChange={setDepartmentFilter}
+          departments={departments}
+          isRestrictedCriteriaEditor={isRestrictedCriteriaEditor}
+          canAdminCriteria={canAdminCriteria}
+          onEdit={showModal}
+          onUpdate={showOfficerUpdateModal}
+          onDelete={showConfirm}
+          onToggleStatus={handleToggleCriteriaStatus}
+        />
+      )}
+      {criteriaModals}
     </PageContainer>
   );
 };

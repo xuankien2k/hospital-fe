@@ -4,9 +4,9 @@ body,
   height: 100%;
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
-    'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-    'Noto Color Emoji';
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
 .colorWeak {
@@ -49,5 +49,180 @@ ol {
         }
       }
     }
+  }
+}
+
+.app-layout-banner-wrap {
+  padding: 16px 24px 0;
+}
+
+/* Mobile layout: thay header ProLayout bằng navbar riêng */
+@media (max-width: 991px) {
+  .ant-pro-layout-header,
+  .ant-layout-header.ant-pro-layout-header {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .app-layout-banner-wrap {
+    display: none;
+  }
+
+  .mobile-app-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 52px;
+    padding: 0 8px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+    padding-top: env(safe-area-inset-top, 0);
+  }
+
+  .mobile-app-nav__brand {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    min-width: 0;
+  }
+
+  .mobile-app-nav__logo {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    border-radius: 6px;
+    background: #fff;
+  }
+
+  .mobile-app-nav__title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #141414;
+    white-space: nowrap;
+  }
+
+  .mobile-app-nav__menu {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  .mobile-app-nav__item {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    flex-shrink: 0;
+    min-width: 56px;
+    padding: 4px 6px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #8c8c8c;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.2;
+    cursor: pointer;
+
+    .anticon {
+      font-size: 16px;
+    }
+
+    &--active {
+      color: #3a4aff;
+      background: #f0f2ff;
+    }
+  }
+
+  .mobile-app-nav__user {
+    flex-shrink: 0;
+  }
+
+  .mobile-app-nav__avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #3a4aff;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .ant-pro-layout-container {
+    padding-inline: 0 !important;
+  }
+
+  .ant-pro-layout-content,
+  .ant-pro-layout .ant-pro-layout-content {
+    padding: 8px !important;
+    margin-block: 0 !important;
+  }
+
+  .ant-pro-layout-content.ant-pro-layout-has-header {
+    padding-block-start: calc(52px + env(safe-area-inset-top, 0px)) !important;
+  }
+
+  .ant-pro-page-container-warp,
+  .ant-pro-page-container {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .ant-pro-page-container-warp-page-header,
+  .ant-pro-page-container .ant-page-header,
+  .ant-page-header {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .ant-pro-page-container-children-container {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .ant-pro-page-container,
+  .ant-pro-page-container-children-container,
+  .ant-pro-page-container-children-content {
+    padding-inline: 0 !important;
+    margin-inline: 0 !important;
+  }
+
+  .report-quality-page--mobile {
+    padding-top: 0;
+  }
+}
+
+@media (min-width: 992px) {
+  .mobile-app-nav {
+    display: none;
   }
 }
