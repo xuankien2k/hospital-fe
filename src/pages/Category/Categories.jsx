@@ -128,6 +128,48 @@ const CRITERIA_MODAL_BUTTON_STYLES = `
   }
 `;
 
+const CRITERIA_MODAL_DISABLED_STYLES = `
+  .criteria-modal-form .ant-input[disabled],
+  .criteria-modal-form .ant-input-disabled,
+  .criteria-modal-form textarea.ant-input[disabled],
+  .criteria-modal-form textarea.ant-input-disabled {
+    color: #434343 !important;
+    -webkit-text-fill-color: #434343 !important;
+    background-color: #f5f5f5 !important;
+    border-color: #d9d9d9 !important;
+    opacity: 1 !important;
+    cursor: default;
+  }
+
+  .criteria-modal-form .ant-select-disabled .ant-select-selector {
+    color: #434343 !important;
+    -webkit-text-fill-color: #434343 !important;
+    background-color: #f5f5f5 !important;
+    border-color: #d9d9d9 !important;
+    opacity: 1 !important;
+    cursor: default;
+  }
+
+  .criteria-modal-form .ant-select-disabled .ant-select-selection-item,
+  .criteria-modal-form .ant-select-disabled .ant-select-selection-placeholder {
+    color: #434343 !important;
+    -webkit-text-fill-color: #434343 !important;
+  }
+
+  .criteria-modal-form .ant-picker-disabled {
+    background-color: #f5f5f5 !important;
+    border-color: #d9d9d9 !important;
+    opacity: 1 !important;
+    cursor: default;
+  }
+
+  .criteria-modal-form .ant-picker-disabled .ant-picker-input > input[disabled] {
+    color: #434343 !important;
+    -webkit-text-fill-color: #434343 !important;
+    opacity: 1 !important;
+  }
+`;
+
 const getCurrentLevelValue = (record) => getCriteriaCurrentLevel(record);
 
 const normalizeCriteriaLevels = (levels) =>
@@ -892,6 +934,7 @@ const Categories = () => {
       <style>
         {CRITERIA_LEVEL_COLLAPSE_STYLES}
         {CRITERIA_MODAL_BUTTON_STYLES}
+        {CRITERIA_MODAL_DISABLED_STYLES}
       </style>
       {(!isRestrictedUpdate || isDesktop) && (
         <>
