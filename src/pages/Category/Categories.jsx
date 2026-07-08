@@ -40,6 +40,7 @@ import {
   isContentAdmin,
   canCreateCriteria as roleCanCreateCriteria,
   isRestrictedCriteriaEditor as roleIsRestrictedCriteriaEditor,
+  canEditCriteria as roleCanEditCriteria,
 } from '../../utils/roles';
 import { LEVEL_COLORS, getLevelColorStyle } from '../../utils/criteriaLevelColors';
 import { BRAND_COLOR } from '../../utils/brandColors';
@@ -299,6 +300,7 @@ const Categories = () => {
   const currentUser = initialState?.currentUser || getStoredUser();
   const isDepartmentHead = currentUser?.role === 'department';
   const isRestrictedCriteriaEditor = roleIsRestrictedCriteriaEditor(currentUser?.role);
+  const canEditCriteria = roleCanEditCriteria(currentUser?.role);
   const canAdminCriteria = isContentAdmin(currentUser?.role);
   const canCreateCriteria = roleCanCreateCriteria(currentUser?.role);
   const showDepartmentFilter = canFilterByDepartment(currentUser?.role);
@@ -339,7 +341,7 @@ const Categories = () => {
 
   const derivedCurrentLevel = useMemo(() => deriveCurrentLevelFromLevels(levels), [levels]);
   const tableData = useMemo(() => buildTableDataWithGroupHeaders(data), [data]);
-  const tableColumnCount = 7;
+  const tableColumnCount = canEditCriteria ? 7 : 6;
 
   // Effects
   useEffect(() => {
@@ -1215,7 +1217,7 @@ const Categories = () => {
       </div>
 
       <ProTable
-        columns={columns}
+        columns={canEditCriteria ? columns : columns.filter((col) => col.key !== 'action')}
         dataSource={tableData}
         rowKey="_id"
         search={false}
@@ -1293,6 +1295,7 @@ const Categories = () => {
           onDepartmentFilterChange={setDepartmentFilter}
           departments={departments}
           isRestrictedCriteriaEditor={isRestrictedCriteriaEditor}
+          canEditCriteria={canEditCriteria}
           canAdminCriteria={canAdminCriteria}
           onEdit={showModal}
           onUpdate={showOfficerUpdateModal}

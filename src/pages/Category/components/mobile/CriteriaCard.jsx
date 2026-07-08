@@ -16,6 +16,7 @@ const formatDate = (input) => {
 const CriteriaCard = ({
   record,
   isRestrictedCriteriaEditor,
+  canEditCriteria,
   canAdminCriteria,
   onEdit,
   onUpdate,
@@ -38,6 +39,7 @@ const CriteriaCard = ({
         : undefined;
 
   const handleOpen = () => {
+    if (!canEditCriteria) return;
     if (isRestrictedCriteriaEditor) {
       onUpdate(record);
     } else {
@@ -45,29 +47,31 @@ const CriteriaCard = ({
     }
   };
 
-  const menuItems = buildCriteriaMenuItems({
-    record,
-    isRestrictedCriteriaEditor,
-    canAdminCriteria,
-    onEdit,
-    onUpdate,
-    onDelete,
-    onToggleStatus,
-  });
+  const menuItems = canEditCriteria
+    ? buildCriteriaMenuItems({
+        record,
+        isRestrictedCriteriaEditor,
+        canAdminCriteria,
+        onEdit,
+        onUpdate,
+        onDelete,
+        onToggleStatus,
+      })
+    : [];
 
   return (
     <Card
       size="small"
-      className={`mobile-list-card mobile-list-card--clickable${inactive ? ' mobile-list-card--inactive' : ''}`}
+      className={`mobile-list-card${canEditCriteria ? ' mobile-list-card--clickable' : ''}${inactive ? ' mobile-list-card--inactive' : ''}`}
       style={{ borderLeft: `4px solid ${levelStyle.bg}` }}
-      onClick={handleOpen}
+      onClick={canEditCriteria ? handleOpen : undefined}
     >
       <div className="mobile-list-card__top">
         <div className="mobile-list-card__top-main">
           <div className="mobile-list-card__code">{record.code}</div>
           <div className="mobile-list-card__title">{record.name}</div>
         </div>
-        <MobileCardMenu items={menuItems} />
+        {canEditCriteria ? <MobileCardMenu items={menuItems} /> : null}
       </div>
 
       <div className="mobile-list-card__meta">

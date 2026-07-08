@@ -4,11 +4,14 @@ export const buildCriteriaMenuItems = ({
   record,
   isRestrictedCriteriaEditor,
   canAdminCriteria,
+  canEditCriteria = true,
   onEdit,
   onUpdate,
   onDelete,
   onToggleStatus,
 }) => {
+  if (!canEditCriteria) return [];
+
   const inactive = record.status === false;
   const items = [
     {

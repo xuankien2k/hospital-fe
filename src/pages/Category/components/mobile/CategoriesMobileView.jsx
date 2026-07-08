@@ -25,6 +25,7 @@ const CategoriesMobileView = ({
   onDepartmentFilterChange,
   departments,
   isRestrictedCriteriaEditor,
+  canEditCriteria,
   canAdminCriteria,
   onEdit,
   onUpdate,
@@ -200,6 +201,7 @@ const CategoriesMobileView = ({
                 <CriteriaCard
                   record={record}
                   isRestrictedCriteriaEditor={isRestrictedCriteriaEditor}
+                  canEditCriteria={canEditCriteria}
                   canAdminCriteria={canAdminCriteria}
                   onEdit={onEdit}
                   onUpdate={onUpdate}

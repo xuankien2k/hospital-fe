@@ -18,3 +18,10 @@ export const RESTRICTED_CRITERIA_EDITOR_ROLES = ['criteria_officer', 'department
 export const isRestrictedCriteriaEditor = (role) => RESTRICTED_CRITERIA_EDITOR_ROLES.includes(role);
 
 export const canCreateCriteria = (role) => isContentAdmin(role);
+
+/** Ban Giám đốc — xem toàn bộ tiêu chí, không được chỉnh sửa */
+export const CRITERIA_VIEW_ONLY_ROLES = ['director'];
+
+export const isCriteriaViewOnly = (role) => CRITERIA_VIEW_ONLY_ROLES.includes(role);
+
+export const canEditCriteria = (role) => !isCriteriaViewOnly(role);
