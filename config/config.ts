@@ -86,6 +86,7 @@ export default defineConfig({
    * @doc https://umijs.org/docs/max/layout-menu
    */
   title: 'Quản lý Bộ tiêu chí chất lượng bệnh viện',
+  favicons: ['/hospital-logo.png'],
   layout: {
     locale: true,
     ...defaultSettings,

@@ -56,6 +56,34 @@ ol {
   padding: 16px 24px 0;
 }
 
+.app-menu-item-with-beta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.app-menu-beta-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(58, 74, 255, 0.12);
+  color: #3a4aff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+
+  &--mobile {
+    padding: 0 4px;
+    font-size: 8px;
+    line-height: 1.2;
+  }
+}
+
 /* Mobile layout: thay header ProLayout bằng navbar riêng */
 @media (max-width: 991px) {
   .ant-pro-layout-header,
@@ -153,6 +181,12 @@ ol {
       color: #3a4aff;
       background: #f0f2ff;
     }
+  }
+
+  .mobile-app-nav__item-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
   }
 
   .mobile-app-nav__user {

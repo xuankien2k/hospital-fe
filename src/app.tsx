@@ -98,6 +98,19 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
 
     menuHeaderRender: undefined,
 
+    menuItemRender: (item, dom) => {
+      if (item.path !== '/Trends') {
+        return dom;
+      }
+
+      return (
+        <span className="app-menu-item-with-beta">
+          {dom}
+          <span className="app-menu-beta-badge">Beta</span>
+        </span>
+      );
+    },
+
     childrenRender: (children) => {
       const { location } = history;
       if (location.pathname === loginPath) {

@@ -12,7 +12,7 @@ import { HOSPITAL_BRAND } from '../../utils/hospitalBrand';
 const NAV_ITEMS = [
   { path: '/Category', label: 'Tiêu chí', icon: SolutionOutlined },
   { path: '/Report', label: 'Báo cáo', icon: DashboardOutlined },
-  { path: '/Trends', label: 'Xu hướng', icon: LineChartOutlined },
+  { path: '/Trends', label: 'Xu hướng', icon: LineChartOutlined, beta: true },
   {
     path: '/user-list',
     label: 'Người dùng',
@@ -58,7 +58,12 @@ const MobileNavBar = () => {
               onClick={() => history.push(item.path)}
             >
               <Icon />
-              <span>{item.label}</span>
+              <span className="mobile-app-nav__item-label">
+                <span>{item.label}</span>
+                {item.beta ? (
+                  <span className="app-menu-beta-badge app-menu-beta-badge--mobile">Beta</span>
+                ) : null}
+              </span>
             </button>
           );
         })}
