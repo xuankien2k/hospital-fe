@@ -6,7 +6,7 @@ import axiosInstance from '../../utils/axiosInstance';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { canFilterByDepartment, getCriteriaDepartmentOptions } from '../../utils/departments';
 import { getCurrentUser as getStoredUser } from '../../utils/authStorage';
-import { useCompactBreakpoint } from '../../hooks/useCompactBreakpoint';
+import { useCompactBreakpoint } from '@/hooks/useCompactBreakpoint';
 import TrendsFilterBar from './components/TrendsFilterBar';
 import TrendsMobileView from './components/mobile/TrendsMobileView';
 import OverallTrendChart from './components/OverallTrendChart';

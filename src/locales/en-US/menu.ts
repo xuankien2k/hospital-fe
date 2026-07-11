@@ -49,4 +49,8 @@ export default {
   'menu.editor.flow': 'Flow Editor',
   'menu.editor.mind': 'Mind Editor',
   'menu.editor.koni': 'Koni Editor',
+  'menu.users': 'Users',
+  'menu.categories': 'Criteria management',
+  'menu.report': 'Report',
+  'menu.trends': 'Trends',
 };

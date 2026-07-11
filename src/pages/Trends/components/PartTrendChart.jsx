@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Line } from '@ant-design/plots';
 import { BRAND_COLOR } from '../../../utils/brandColors';
-import { getPartDisplayLabel } from '../../../utils/reportParts';
+import { getPartDisplayLabel } from '@/utils/reportParts';
 
 const PART_COLORS = [BRAND_COLOR, '#16a34a', '#ca8a04', '#E61515', '#7c3aed'];
 

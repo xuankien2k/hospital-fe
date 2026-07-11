@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { FilterOutlined } from '@ant-design/icons';
 import { Select } from 'antd';
-import { PART_FILTER_OPTIONS } from '../../../utils/reportParts';
+import { PART_FILTER_OPTIONS } from '@/utils/reportParts';
 
 const PERIOD_OPTIONS = [
   { label: '1 tháng', value: '1m' },

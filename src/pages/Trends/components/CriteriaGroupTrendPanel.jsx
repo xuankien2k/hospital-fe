@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { Collapse, Segmented, Table, Tag } from 'antd';
 import { ArrowDownOutlined, ArrowUpOutlined, MinusOutlined } from '@ant-design/icons';
-import { getPartDisplayLabel, PART_ORDER } from '../../../utils/reportParts';
-import { getLevelColorStyle } from '../../../utils/criteriaLevelColors';
+import { getPartDisplayLabel, PART_ORDER } from '@/utils/reportParts';
+import { getLevelColorStyle } from '@/utils/criteriaLevelColors';
 
 const VIEW_MODES = [
   { label: 'Theo nhóm tiêu chí', value: 'part' },

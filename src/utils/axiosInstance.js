@@ -2,12 +2,22 @@ import axios from 'axios';
 import { getAuthToken } from './authStorage';
 import { getApiErrorMessage } from './apiError';
 
-// Dev: localhost. Production: cùng domain (Nginx proxy /api → backend)
-const API_BASE_URL =
-  process.env.NODE_ENV === 'production' ? 'https://bacninh-hospital.com' : 'http://localhost:3005';
+const PRODUCTION_API_URL = 'https://bacninh-hospital.com';
+const LOCAL_API_URL = 'http://localhost:3005';
+
+function resolveApiBaseUrl() {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return LOCAL_API_URL;
+    }
+  }
+
+  return process.env.NODE_ENV === 'production' ? PRODUCTION_API_URL : LOCAL_API_URL;
+}
 
 const axiosInstance = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: resolveApiBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },

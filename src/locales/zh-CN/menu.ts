@@ -49,4 +49,8 @@ export default {
   'menu.editor.flow': '流程编辑器',
   'menu.editor.mind': '脑图编辑器',
   'menu.editor.koni': '拓扑编辑器',
+  'menu.users': 'Danh sách người dùng',
+  'menu.categories': 'Quản lý tiêu chí',
+  'menu.report': 'Báo cáo',
+  'menu.trends': 'Xu hướng',
 };
