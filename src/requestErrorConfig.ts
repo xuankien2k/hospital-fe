@@ -2,6 +2,7 @@
 import type { RequestConfig } from '@umijs/max';
 import { message, notification } from 'antd';
 import { ERROR_MESSAGE_DURATION } from './utils/configureMessage';
+import { getApiErrorMessage } from './utils/apiError';
 
 // 错误处理方案： 错误类型
 enum ErrorShowType {
@@ -72,24 +73,19 @@ export const errorConfig: RequestConfig = {
           }
         }
       } else if (error.response) {
-        // Axios 的错误
-        // 请求成功发出且服务器也响应了状态码，但状态代码超出了 2xx 的范围
+        const errorMessage = getApiErrorMessage(error, `Lỗi máy chủ (${error.response.status})`);
         message.error({
-          content: `Response status:${error.response.status}`,
+          content: errorMessage,
           duration: ERROR_MESSAGE_DURATION,
         });
       } else if (error.request) {
-        // 请求已经成功发起，但没有收到响应
-        // \`error.request\` 在浏览器中是 XMLHttpRequest 的实例，
-        // 而在node.js中是 http.ClientRequest 的实例
         message.error({
-          content: 'None response! Please retry.',
+          content: 'Không nhận được phản hồi từ máy chủ. Vui lòng thử lại.',
           duration: ERROR_MESSAGE_DURATION,
         });
       } else {
-        // 发送请求时出了点问题
         message.error({
-          content: 'Request error, please retry.',
+          content: getApiErrorMessage(error, 'Lỗi gửi yêu cầu. Vui lòng thử lại.'),
           duration: ERROR_MESSAGE_DURATION,
         });
       }
@@ -112,7 +108,10 @@ export const errorConfig: RequestConfig = {
       const { data } = response as unknown as ResponseStructure;
 
       if (data?.success === false) {
-        message.error({ content: '请求失败！', duration: ERROR_MESSAGE_DURATION });
+        message.error({
+          content: getApiErrorMessage({ response: { data } }, 'Yêu cầu thất bại'),
+          duration: ERROR_MESSAGE_DURATION,
+        });
       }
       return response;
     },

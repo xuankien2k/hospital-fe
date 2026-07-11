@@ -7,6 +7,7 @@ import {
   setCurrentUser,
 } from '../../../utils/authStorage';
 import { HOSPITAL_BRAND } from '../../../utils/hospitalBrand';
+import { getApiErrorMessage } from '../../../utils/apiError';
 import { BRAND_COLOR } from '../../../utils/brandColors';
 import { Helmet, history, useIntl, useModel } from '@umijs/max';
 import { Alert, Button, Checkbox, Form, Input, Modal, message } from 'antd';
@@ -233,12 +234,15 @@ const Login: React.FC = () => {
       }
 
       setUserLoginState(response);
-    } catch {
+    } catch (error) {
       message.error(
-        intl.formatMessage({
-          id: 'pages.login.failure',
-          defaultMessage: 'Đăng nhập thất bại, vui lòng thử lại!',
-        }),
+        getApiErrorMessage(
+          error,
+          intl.formatMessage({
+            id: 'pages.login.failure',
+            defaultMessage: 'Đăng nhập thất bại, vui lòng thử lại!',
+          }),
+        ),
       );
     } finally {
       setSubmitting(false);

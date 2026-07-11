@@ -29,6 +29,7 @@ import {
   StopOutlined,
 } from '@ant-design/icons';
 import axiosInstance from '../../utils/axiosInstance';
+import { getApiErrorMessage } from '../../utils/apiError';
 import {
   getCriteriaProgressPercent,
   getCriteriaProgressStatus,
@@ -446,7 +447,7 @@ const Categories = () => {
         list();
       }
     } catch (error) {
-      message.error(error?.response?.data?.message || 'Không thể thêm tiêu chí');
+      message.error(getApiErrorMessage(error, 'Không thể thêm tiêu chí'));
     }
   };
 
@@ -458,7 +459,7 @@ const Categories = () => {
         list();
       }
     } catch (error) {
-      message.error('Error updating user:', 5);
+      message.error(getApiErrorMessage(error, 'Không thể cập nhật tiêu chí'));
     }
   };
 
@@ -574,12 +575,14 @@ const Categories = () => {
   };
 
   const handleDelete = async (id) => {
-    const response = await axiosInstance.post(`/api/criteria/delete`, { ids: [id] });
-    if (response.status === 200) {
-      message.success('Xoá thành công');
-      list();
-    } else {
-      message.error('Xoá thất bại', 5);
+    try {
+      const response = await axiosInstance.post(`/api/criteria/delete`, { ids: [id] });
+      if (response.status === 200) {
+        message.success('Xoá thành công');
+        list();
+      }
+    } catch (error) {
+      message.error(getApiErrorMessage(error, 'Xoá thất bại'));
     }
   };
 

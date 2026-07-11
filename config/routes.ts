@@ -42,6 +42,12 @@ export default [
     component: './Report/Report',
   },
   {
+    path: '/Trends',
+    name: 'Xu hướng',
+    icon: 'lineChart',
+    component: './Trends/Trends',
+  },
+  {
     path: '/admin',
     name: 'admin',
     icon: 'crown',

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getAuthToken } from './authStorage';
+import { getApiErrorMessage } from './apiError';
 
 // Dev: localhost. Production: cùng domain (Nginx proxy /api → backend)
 const API_BASE_URL =
@@ -29,6 +30,11 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
+    const apiMessage = getApiErrorMessage(error, '');
+    if (apiMessage) {
+      error.message = apiMessage;
+      error.apiMessage = apiMessage;
+    }
     console.error('API Error:', error);
     return Promise.reject(error);
   },

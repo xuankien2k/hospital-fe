@@ -3,6 +3,7 @@ import { useModel } from '@umijs/max';
 import { Table, Card, message, Tag, Progress, Typography, Row, Col, Tooltip, Button } from 'antd';
 import { InfoCircleOutlined, DownloadOutlined } from '@ant-design/icons';
 import axiosInstance from '../../utils/axiosInstance';
+import { getApiErrorMessage } from '../../utils/apiError';
 import dayjs from 'dayjs';
 import {
   getCriteriaProgressPercent,
@@ -232,7 +233,7 @@ const Report = () => {
       setNotAchievedSubcriteria(report.notAchievedSubcriteria || []);
       setMatrix(report.matrix || report.details || []);
     } catch (err) {
-      message.error(err.message || 'Không tải được báo cáo');
+      message.error(getApiErrorMessage(err, 'Không tải được báo cáo'));
     } finally {
       setLoading(false);
     }
@@ -279,13 +280,15 @@ const Report = () => {
         try {
           const text = await data.text();
           const parsed = JSON.parse(text);
-          message.error(parsed.message || 'Không xuất được báo cáo');
+          message.error(
+            getApiErrorMessage({ response: { data: parsed } }, 'Không xuất được báo cáo'),
+          );
           return;
         } catch {
           /* fall through */
         }
       }
-      message.error(err.message || 'Không xuất được báo cáo');
+      message.error(getApiErrorMessage(err, 'Không xuất được báo cáo'));
     } finally {
       setExporting(false);
     }

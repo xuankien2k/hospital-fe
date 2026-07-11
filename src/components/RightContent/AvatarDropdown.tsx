@@ -14,6 +14,7 @@ import React, { useState } from 'react';
 import { flushSync } from 'react-dom';
 import HeaderDropdown from '../HeaderDropdown';
 import axiosInstance from '../../utils/axiosInstance';
+import { getApiErrorMessage } from '../../utils/apiError';
 import { clearAuthSession } from '../../utils/authStorage';
 import { isSystemAdmin } from '../../utils/roles';
 
@@ -90,7 +91,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
       form.resetFields();
       setChangePasswordOpen(false);
     } catch (error: any) {
-      message.error(error?.response?.data?.message || error?.message || 'Không đổi được mật khẩu');
+      message.error(getApiErrorMessage(error, 'Không đổi được mật khẩu'));
     } finally {
       setSubmitting(false);
     }

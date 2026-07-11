@@ -12,6 +12,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import axiosInstance from '../../utils/axiosInstance';
+import { getApiErrorMessage } from '../../utils/apiError';
 import { getCurrentUser as getStoredUser } from '../../utils/authStorage';
 import { useCompactBreakpoint } from '../../hooks/useCompactBreakpoint';
 import { canManageUsersFully, isSystemAdmin } from '../../utils/roles';
@@ -80,7 +81,7 @@ const Users = () => {
         fetchUsers();
       }
     } catch (error) {
-      message.error('Lỗi khi thêm người dùng:', error);
+      message.error(getApiErrorMessage(error, 'Lỗi khi thêm người dùng'));
     }
   };
 
@@ -93,7 +94,7 @@ const Users = () => {
         fetchUsers();
       }
     } catch (error) {
-      message.error('Lỗi khi cập nhật người dùng:', error);
+      message.error(getApiErrorMessage(error, 'Lỗi khi cập nhật người dùng'));
     }
   };
 
@@ -105,7 +106,7 @@ const Users = () => {
         fetchUsers();
       }
     } catch (error) {
-      message.error('Lỗi khi xóa người dùng:', error);
+      message.error(getApiErrorMessage(error, 'Lỗi khi xóa người dùng'));
     }
   };
 

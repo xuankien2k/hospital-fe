@@ -1,5 +1,10 @@
 import { AvatarDropdown } from '@/components';
-import { DashboardOutlined, SolutionOutlined, UserOutlined } from '@ant-design/icons';
+import {
+  DashboardOutlined,
+  LineChartOutlined,
+  SolutionOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 import { history, useAccess, useLocation, useModel } from '@umijs/max';
 import { Grid } from 'antd';
 import { HOSPITAL_BRAND } from '../../utils/hospitalBrand';
@@ -7,6 +12,7 @@ import { HOSPITAL_BRAND } from '../../utils/hospitalBrand';
 const NAV_ITEMS = [
   { path: '/Category', label: 'Tiêu chí', icon: SolutionOutlined },
   { path: '/Report', label: 'Báo cáo', icon: DashboardOutlined },
+  { path: '/Trends', label: 'Xu hướng', icon: LineChartOutlined },
   {
     path: '/user-list',
     label: 'Người dùng',
