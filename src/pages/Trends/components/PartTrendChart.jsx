@@ -5,6 +5,16 @@ import { getPartDisplayLabel } from '@/utils/reportParts';
 
 const PART_COLORS = [BRAND_COLOR, '#16a34a', '#ca8a04', '#E61515', '#7c3aed'];
 
+const parseTooltipScore = (item) => {
+  if (typeof item?.avgScore === 'number') {
+    return item.avgScore;
+  }
+  const match = String(item?.value ?? '').match(/^([\d.]+)/);
+  return match ? Number(match[1]) : 0;
+};
+
+const formatPartTooltipValue = (datum) => `${datum.avgScore.toFixed(2)} · ${datum.count} TC`;
+
 const PartTrendChart = ({ byPartTrend = {}, compact = false }) => {
   const chartData = useMemo(() => {
     const rows = [];
@@ -51,16 +61,48 @@ const PartTrendChart = ({ byPartTrend = {}, compact = false }) => {
       legend: {
         position: compact ? 'bottom' : 'top',
       },
+      interaction: {
+        tooltip: {
+          shared: true,
+          enterable: false,
+          sort: (item) => -parseTooltipScore(item),
+        },
+      },
       tooltip: {
         title: (datum) => datum.label,
+        css: {
+          '.g2-tooltip': {
+            'max-width': '320px',
+            'max-height': '280px',
+            overflow: 'auto',
+            padding: '8px 10px',
+            'font-size': '12px',
+          },
+          '.g2-tooltip-title': {
+            'margin-bottom': '6px',
+            'font-size': '12px',
+            'font-weight': '700',
+          },
+          '.g2-tooltip-list-item': {
+            'margin-top': '3px',
+            gap: '6px',
+          },
+          '.g2-tooltip-list-item-name': {
+            'max-width': '180px',
+            overflow: 'hidden',
+            'text-overflow': 'ellipsis',
+            'white-space': 'nowrap',
+          },
+          '.g2-tooltip-list-item-value': {
+            'font-weight': '600',
+            'white-space': 'nowrap',
+          },
+        },
         items: [
           (datum) => ({
             name: datum.part,
-            value: datum.avgScore.toFixed(2),
-          }),
-          (datum) => ({
-            name: 'Số tiêu chí',
-            value: datum.count,
+            value: formatPartTooltipValue(datum),
+            avgScore: datum.avgScore,
           }),
         ],
       },

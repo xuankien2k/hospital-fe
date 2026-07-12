@@ -19,7 +19,7 @@ const Trends = () => {
   const { isDesktop } = useCompactBreakpoint();
 
   const [loading, setLoading] = useState(false);
-  const [periodFilter, setPeriodFilter] = useState('1y');
+  const [periodFilter, setPeriodFilter] = useState('1m');
   const [trend, setTrend] = useState(null);
   const [snapshots, setSnapshots] = useState([]);
 
