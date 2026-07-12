@@ -23,7 +23,23 @@ const DEPT_COLORS = [
   '#ea580c',
   '#4f46e5',
   '#0d9488',
+  '#be185d',
+  '#65a30d',
+  '#0284c7',
+  '#c026d3',
+  '#d97706',
+  '#059669',
 ];
+
+const getDeptColor = (index) => DEPT_COLORS[index % DEPT_COLORS.length];
+
+const parseTooltipScore = (item) => {
+  if (typeof item?.avgScore === 'number') {
+    return item.avgScore;
+  }
+  const match = String(item?.value ?? '').match(/^([\d.]+)/);
+  return match ? Number(match[1]) : 0;
+};
 
 const buildDepartmentMeta = (byDepartmentTrend = []) =>
   (byDepartmentTrend || [])
@@ -45,7 +61,7 @@ const buildDepartmentMeta = (byDepartmentTrend = []) =>
 const pickVisibleDepartments = (meta, viewMode, customSelected, maxVisible) => {
   if (viewMode === 'custom') {
     const fallbackIds = meta.slice(0, maxVisible).map((item) => item.id);
-    const selectedIds = (customSelected.length ? customSelected : fallbackIds).slice(0, maxVisible);
+    const selectedIds = customSelected.length ? customSelected : fallbackIds;
     return meta.filter((item) => selectedIds.includes(item.id));
   }
 
@@ -103,6 +119,14 @@ const DepartmentTrendChart = ({ byDepartmentTrend = [], compact = false }) => {
     [visibleDepartments],
   );
 
+  const departmentColorMap = useMemo(() => {
+    const map = new Map();
+    visibleDepartments.forEach((dept, index) => {
+      map.set(dept.name, getDeptColor(index));
+    });
+    return map;
+  }, [visibleDepartments]);
+
   const latestRanking = useMemo(
     () =>
       departmentMeta.map((item, index) => ({
@@ -116,19 +140,30 @@ const DepartmentTrendChart = ({ byDepartmentTrend = [], compact = false }) => {
     [departmentMeta, visibleDepartmentNames],
   );
 
+  const allDepartmentIds = useMemo(() => departmentMeta.map((item) => item.id), [departmentMeta]);
+
+  const departmentOptions = useMemo(
+    () =>
+      departmentMeta.map((item) => ({
+        label: `${item.name} (${item.latestScore.toFixed(2)})`,
+        value: item.id,
+      })),
+    [departmentMeta],
+  );
+
   const config = useMemo(
     () => ({
       data: chartData,
       xField: 'label',
       yField: 'avgScore',
       colorField: 'department',
-      height: compact ? 260 : 320,
+      height: compact ? 260 : Math.min(420, 220 + visibleDepartments.length * 12),
       smooth: true,
       scale: {
         y: { domain: [0, 5] },
         color: {
           domain: departments,
-          range: DEPT_COLORS.slice(0, departments.length),
+          range: departments.map((name) => departmentColorMap.get(name)),
         },
       },
       axis: {
@@ -146,13 +181,16 @@ const DepartmentTrendChart = ({ byDepartmentTrend = [], compact = false }) => {
         tooltip: {
           shared: true,
           enterable: false,
+          sort: (item) => -parseTooltipScore(item),
         },
       },
       tooltip: {
         title: (datum) => datum.label,
         css: {
           '.g2-tooltip': {
-            'max-width': '280px',
+            'max-width': '320px',
+            'max-height': '280px',
+            overflow: 'auto',
             padding: '8px 10px',
             'font-size': '12px',
           },
@@ -180,21 +218,25 @@ const DepartmentTrendChart = ({ byDepartmentTrend = [], compact = false }) => {
           (datum) => ({
             name: datum.department,
             value: formatDeptTooltipValue(datum),
+            avgScore: datum.avgScore,
           }),
         ],
       },
     }),
-    [chartData, departments, compact],
+    [chartData, departments, departmentColorMap, compact, visibleDepartments.length],
   );
+
+  const handleSelectAllDepartments = () => {
+    setCustomSelected(allDepartmentIds);
+  };
+
+  const handleClearDepartments = () => {
+    setCustomSelected([]);
+  };
 
   if (!departmentMeta.length) {
     return <div className="trends-empty-chart">Chưa có dữ liệu theo khoa/phòng</div>;
   }
-
-  const departmentOptions = departmentMeta.map((item) => ({
-    label: `${item.name} (${item.latestScore.toFixed(2)})`,
-    value: item.id,
-  }));
 
   return (
     <div className="trends-dept-chart">
@@ -206,36 +248,48 @@ const DepartmentTrendChart = ({ byDepartmentTrend = [], compact = false }) => {
           onChange={setViewMode}
         />
         {viewMode === 'custom' ? (
-          <Select
-            mode="multiple"
-            allowClear
-            showSearch
-            maxCount={maxVisible}
-            className="trends-dept-chart__select"
-            placeholder={`Chọn tối đa ${maxVisible} khoa/phòng`}
-            value={customSelected}
-            options={departmentOptions}
-            optionFilterProp="label"
-            onChange={setCustomSelected}
-          />
+          <div className="trends-dept-chart__select-wrap">
+            <Select
+              mode="multiple"
+              allowClear
+              showSearch
+              className="trends-dept-chart__select"
+              placeholder="Chọn khoa/phòng (có thể chọn tất cả)"
+              value={customSelected}
+              options={departmentOptions}
+              optionFilterProp="label"
+              onChange={setCustomSelected}
+              maxTagCount={compact ? 2 : 4}
+            />
+            <div className="trends-dept-chart__select-actions">
+              <button type="button" onClick={handleSelectAllDepartments}>
+                Chọn tất cả
+              </button>
+              <button type="button" onClick={handleClearDepartments}>
+                Bỏ chọn
+              </button>
+            </div>
+          </div>
         ) : null}
       </div>
 
       <Typography.Text type="secondary" className="trends-dept-chart__hint">
-        Hiển thị {visibleDepartments.length}/{departmentMeta.length} khoa/phòng trên biểu đồ. Xem
-        đầy đủ ở bảng xếp hạng bên dưới.
+        {viewMode === 'custom'
+          ? `Đang hiển thị ${visibleDepartments.length}/${departmentMeta.length} khoa/phòng trên biểu đồ.`
+          : `Hiển thị ${visibleDepartments.length}/${departmentMeta.length} khoa/phòng trên biểu đồ.`}{' '}
+        Xem đầy đủ ở bảng xếp hạng bên dưới.
       </Typography.Text>
 
       <div className="trends-dept-chart__chips">
-        {visibleDepartments.map((dept, index) => (
+        {visibleDepartments.map((dept) => (
           <span
             key={dept.id}
             className="trends-dept-chart__chip"
-            style={{ borderColor: DEPT_COLORS[index % DEPT_COLORS.length] }}
+            style={{ borderColor: departmentColorMap.get(dept.name) }}
           >
             <span
               className="trends-dept-chart__chip-dot"
-              style={{ background: DEPT_COLORS[index % DEPT_COLORS.length] }}
+              style={{ background: departmentColorMap.get(dept.name) }}
             />
             {dept.name}
           </span>

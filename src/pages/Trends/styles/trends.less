@@ -178,6 +178,10 @@
     grid-template-columns: minmax(280px, 1.2fr) minmax(220px, 1fr) minmax(220px, 1fr);
     gap: 16px 20px;
     align-items: end;
+
+    &--period-only {
+      grid-template-columns: 1fr;
+    }
   }
 
   &__group {
@@ -297,6 +301,37 @@
     flex: 1 1 280px;
     min-width: 220px;
     max-width: 100%;
+  }
+
+  &__select-wrap {
+    display: flex;
+    flex: 1 1 360px;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    min-width: 260px;
+  }
+
+  &__select-actions {
+    display: inline-flex;
+    gap: 8px;
+
+    button {
+      appearance: none;
+      border: 1px solid #d9d9d9;
+      background: #fff;
+      color: #3a4aff;
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+
+      &:hover {
+        border-color: #3a4aff;
+        background: #f5f7ff;
+      }
+    }
   }
 
   &__hint {

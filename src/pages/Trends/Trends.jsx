@@ -1,11 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useModel } from '@umijs/max';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Card, message, Spin, Typography } from 'antd';
 import { LineChartOutlined } from '@ant-design/icons';
 import axiosInstance from '../../utils/axiosInstance';
 import { getApiErrorMessage } from '../../utils/apiError';
-import { canFilterByDepartment, getCriteriaDepartmentOptions } from '../../utils/departments';
-import { getCurrentUser as getStoredUser } from '../../utils/authStorage';
 import { useCompactBreakpoint } from '@/hooks/useCompactBreakpoint';
 import TrendsFilterBar from './components/TrendsFilterBar';
 import TrendsMobileView from './components/mobile/TrendsMobileView';
@@ -20,31 +17,11 @@ const { Title, Text } = Typography;
 
 const Trends = () => {
   const { isDesktop } = useCompactBreakpoint();
-  const { initialState } = useModel('@@initialState');
-  const currentUser = initialState?.currentUser || getStoredUser();
-
-  const showDepartmentFilter = useMemo(
-    () => canFilterByDepartment(currentUser?.role),
-    [currentUser?.role],
-  );
 
   const [loading, setLoading] = useState(false);
   const [periodFilter, setPeriodFilter] = useState('1y');
-  const [partFilter, setPartFilter] = useState('');
-  const [departmentFilter, setDepartmentFilter] = useState(undefined);
-  const [departmentOptions, setDepartmentOptions] = useState([]);
   const [trend, setTrend] = useState(null);
   const [snapshots, setSnapshots] = useState([]);
-
-  const loadDepartments = useCallback(async () => {
-    if (!showDepartmentFilter) return;
-    try {
-      const response = await axiosInstance.get('/api/departments/list');
-      setDepartmentOptions(getCriteriaDepartmentOptions(response.data?.data || []));
-    } catch {
-      // bỏ qua
-    }
-  }, [showDepartmentFilter]);
 
   const loadSnapshots = useCallback(async () => {
     try {
@@ -60,8 +37,6 @@ const Trends = () => {
       setLoading(true);
       const response = await axiosInstance.post('/api/report/trends', {
         period: periodFilter,
-        part: partFilter || undefined,
-        departmentId: departmentFilter || undefined,
       });
       setTrend(response.data?.trend || null);
     } catch (err) {
@@ -69,12 +44,11 @@ const Trends = () => {
     } finally {
       setLoading(false);
     }
-  }, [periodFilter, partFilter, departmentFilter]);
+  }, [periodFilter]);
 
   useEffect(() => {
-    loadDepartments();
     loadSnapshots();
-  }, [loadDepartments, loadSnapshots]);
+  }, [loadSnapshots]);
 
   useEffect(() => {
     fetchTrends();
@@ -101,12 +75,6 @@ const Trends = () => {
         scoreDelta={scoreDelta}
         periodFilter={periodFilter}
         onPeriodChange={setPeriodFilter}
-        partFilter={partFilter}
-        onPartChange={setPartFilter}
-        departmentFilter={departmentFilter}
-        onDepartmentChange={setDepartmentFilter}
-        showDepartmentFilter={showDepartmentFilter}
-        departmentOptions={departmentOptions}
       />
     );
   }
@@ -126,16 +94,7 @@ const Trends = () => {
         </div>
       </div>
 
-      <TrendsFilterBar
-        periodFilter={periodFilter}
-        onPeriodChange={setPeriodFilter}
-        partFilter={partFilter}
-        onPartChange={setPartFilter}
-        departmentFilter={departmentFilter}
-        onDepartmentChange={setDepartmentFilter}
-        showDepartmentFilter={showDepartmentFilter}
-        departmentOptions={departmentOptions}
-      />
+      <TrendsFilterBar periodFilter={periodFilter} onPeriodChange={setPeriodFilter} />
 
       {!trend?.hasEnoughData ? (
         <Alert

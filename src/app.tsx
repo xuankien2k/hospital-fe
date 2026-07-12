@@ -1,7 +1,7 @@
 import { AvatarDropdown, AvatarName } from '@/components';
 import type { Settings as LayoutSettings } from '@ant-design/pro-components';
 import type { RunTimeLayoutConfig } from '@umijs/max';
-import { history } from '@umijs/max';
+import { history, Link } from '@umijs/max';
 import React from 'react';
 import defaultSettings from '../config/defaultSettings';
 import { errorConfig } from './requestErrorConfig';
@@ -10,6 +10,36 @@ import HospitalBrandBanner from './components/HospitalBrandBanner';
 import MobileNavBar from './components/MobileNavBar';
 
 const loginPath = '/user/login';
+
+const renderMenuItem = (menuItemProps, defaultDom) => {
+  let content = defaultDom;
+
+  if (menuItemProps.path === '/Trends' && React.isValidElement(defaultDom)) {
+    content = React.cloneElement(
+      defaultDom,
+      {},
+      <>
+        {defaultDom.props.children}
+        <span className="app-menu-beta-badge">Beta</span>
+      </>,
+    );
+  }
+
+  if (menuItemProps.isUrl || menuItemProps.children) {
+    return content;
+  }
+
+  const { location } = history;
+  if (menuItemProps.path && location.pathname !== menuItemProps.path) {
+    return (
+      <Link to={menuItemProps.path.replace('/*', '')} target={menuItemProps.target}>
+        {content}
+      </Link>
+    );
+  }
+
+  return content;
+};
 
 /**
  * @see  https://umijs.org/zh-CN/plugins/plugin-initial-state
@@ -98,18 +128,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
 
     menuHeaderRender: undefined,
 
-    menuItemRender: (item, dom) => {
-      if (item.path !== '/Trends') {
-        return dom;
-      }
-
-      return (
-        <span className="app-menu-item-with-beta">
-          {dom}
-          <span className="app-menu-beta-badge">Beta</span>
-        </span>
-      );
-    },
+    menuItemRender: renderMenuItem,
 
     childrenRender: (children) => {
       const { location } = history;

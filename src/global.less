@@ -56,16 +56,10 @@ ol {
   padding: 16px 24px 0;
 }
 
-.app-menu-item-with-beta {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-}
-
 .app-menu-beta-badge {
   display: inline-flex;
   align-items: center;
+  margin-left: 6px;
   padding: 1px 6px;
   border-radius: 999px;
   background: rgba(58, 74, 255, 0.12);
@@ -76,6 +70,7 @@ ol {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   flex-shrink: 0;
+  pointer-events: none;
 
   &--mobile {
     padding: 0 4px;
