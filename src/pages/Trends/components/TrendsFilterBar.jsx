@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { FilterOutlined } from '@ant-design/icons';
+import { Button } from 'antd';
+import { DownloadOutlined, FilterOutlined } from '@ant-design/icons';
 
 const PERIOD_OPTIONS = [
   { label: '1 tháng', value: '1m' },
@@ -8,7 +9,14 @@ const PERIOD_OPTIONS = [
   { label: '1 năm', value: '1y' },
 ];
 
-const TrendsFilterBar = ({ periodFilter, onPeriodChange, compact = false }) => {
+const TrendsFilterBar = ({
+  periodFilter,
+  onPeriodChange,
+  onDownload,
+  downloading = false,
+  downloadDisabled = false,
+  compact = false,
+}) => {
   const activeSummary = useMemo(() => {
     const periodLabel = PERIOD_OPTIONS.find((item) => item.value === periodFilter)?.label;
     return periodLabel ? [periodLabel] : [];
@@ -32,6 +40,19 @@ const TrendsFilterBar = ({ periodFilter, onPeriodChange, compact = false }) => {
             </div>
           </div>
         </div>
+        {onDownload ? (
+          <Button
+            type="primary"
+            icon={<DownloadOutlined />}
+            loading={downloading}
+            disabled={downloadDisabled}
+            onClick={onDownload}
+            className="trends-filter__download-btn"
+            size={compact ? 'middle' : 'middle'}
+          >
+            {compact ? 'Tải CSV' : 'Tải dữ liệu snapshot'}
+          </Button>
+        ) : null}
       </div>
 
       <div className="trends-filter__body trends-filter__body--period-only">

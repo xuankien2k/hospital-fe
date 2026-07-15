@@ -11,6 +11,7 @@ import PartTrendChart from './components/PartTrendChart';
 import DepartmentTrendChart from './components/DepartmentTrendChart';
 import CriteriaGroupTrendPanel from './components/CriteriaGroupTrendPanel';
 import CriteriaAnalysisPanel from './components/CriteriaAnalysisPanel';
+import { downloadTrendSnapshot } from './utils/exportTrendSnapshot';
 import './styles/trends.less';
 
 const { Title, Text } = Typography;
@@ -19,6 +20,7 @@ const Trends = () => {
   const { isDesktop } = useCompactBreakpoint();
 
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [periodFilter, setPeriodFilter] = useState('1m');
   const [trend, setTrend] = useState(null);
   const [snapshots, setSnapshots] = useState([]);
@@ -64,6 +66,35 @@ const Trends = () => {
       ? Number((latestPoint.overallScore - firstPoint.overallScore).toFixed(2))
       : 0;
 
+  const handleDownloadSnapshot = () => {
+    if (!trend?.snapshotCount) {
+      message.warning('Chưa có dữ liệu snapshot để tải về');
+      return;
+    }
+
+    try {
+      setDownloading(true);
+      const downloaded = downloadTrendSnapshot(trend, periodFilter);
+      if (downloaded) {
+        message.success('Đã tải dữ liệu snapshot');
+      } else {
+        message.warning('Chưa có dữ liệu snapshot để tải về');
+      }
+    } catch {
+      message.error('Không tải được dữ liệu snapshot');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const filterBarProps = {
+    periodFilter,
+    onPeriodChange: setPeriodFilter,
+    onDownload: handleDownloadSnapshot,
+    downloading,
+    downloadDisabled: loading || !trend?.snapshotCount,
+  };
+
   if (!isDesktop) {
     return (
       <TrendsMobileView
@@ -73,8 +104,7 @@ const Trends = () => {
         overallTrend={overallTrend}
         periodLabels={periodLabels}
         scoreDelta={scoreDelta}
-        periodFilter={periodFilter}
-        onPeriodChange={setPeriodFilter}
+        filterBarProps={filterBarProps}
       />
     );
   }
@@ -94,7 +124,7 @@ const Trends = () => {
         </div>
       </div>
 
-      <TrendsFilterBar periodFilter={periodFilter} onPeriodChange={setPeriodFilter} />
+      <TrendsFilterBar {...filterBarProps} />
 
       {!trend?.hasEnoughData ? (
         <Alert

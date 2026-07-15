@@ -43,8 +43,7 @@ const TrendsMobileView = ({
   overallTrend,
   periodLabels,
   scoreDelta,
-  periodFilter,
-  onPeriodChange,
+  filterBarProps,
 }) => {
   const latestPoint = overallTrend[overallTrend.length - 1];
 
@@ -60,7 +59,7 @@ const TrendsMobileView = ({
         </Text>
       </div>
 
-      <TrendsFilterBar periodFilter={periodFilter} onPeriodChange={onPeriodChange} compact />
+      <TrendsFilterBar {...filterBarProps} compact />
 
       {!trend?.hasEnoughData ? (
         <Alert
