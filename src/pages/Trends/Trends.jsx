@@ -5,6 +5,7 @@ import axiosInstance from '../../utils/axiosInstance';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { useCompactBreakpoint } from '@/hooks/useCompactBreakpoint';
 import TrendsFilterBar from './components/TrendsFilterBar';
+import TrendsDemoNotice from './components/TrendsDemoNotice';
 import TrendsMobileView from './components/mobile/TrendsMobileView';
 import OverallTrendChart from './components/OverallTrendChart';
 import PartTrendChart from './components/PartTrendChart';
@@ -93,6 +94,7 @@ const Trends = () => {
     onDownload: handleDownloadSnapshot,
     downloading,
     downloadDisabled: loading || !trend?.snapshotCount,
+    snapshotCount: trend?.snapshotCount || 0,
   };
 
   if (!isDesktop) {
@@ -125,6 +127,8 @@ const Trends = () => {
       </div>
 
       <TrendsFilterBar {...filterBarProps} />
+
+      <TrendsDemoNotice demoMode={trend?.demoMode} />
 
       {!trend?.hasEnoughData ? (
         <Alert

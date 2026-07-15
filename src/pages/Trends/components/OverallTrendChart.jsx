@@ -1,6 +1,14 @@
 import React, { useMemo } from 'react';
 import { Line } from '@ant-design/plots';
 import { BRAND_COLOR } from '../../../utils/brandColors';
+import TrendChartScroll from './TrendChartScroll';
+import {
+  buildTrendLineStyle,
+  buildTrendXAxis,
+  countUniqueLabels,
+  getTrendChartLayout,
+  TREND_POINT_SIZE,
+} from '../utils/trendsChartHelpers';
 
 const OverallTrendChart = ({ data = [], compact = false }) => {
   const chartData = useMemo(
@@ -14,16 +22,21 @@ const OverallTrendChart = ({ data = [], compact = false }) => {
     [data],
   );
 
+  const pointCount = useMemo(() => countUniqueLabels(chartData, 'label'), [chartData]);
+  const layout = useMemo(() => getTrendChartLayout(pointCount, compact), [pointCount, compact]);
+
   const config = useMemo(
     () => ({
       data: chartData,
       xField: 'label',
       yField: 'overallScore',
-      height: compact ? 240 : 300,
+      height: layout.height,
+      paddingBottom: layout.paddingBottom,
       smooth: true,
       color: BRAND_COLOR,
+      style: buildTrendLineStyle(),
       point: {
-        size: compact ? 4 : 5,
+        size: compact ? TREND_POINT_SIZE.compact : TREND_POINT_SIZE.desktop,
         shape: 'circle',
         style: {
           fill: '#fff',
@@ -37,9 +50,7 @@ const OverallTrendChart = ({ data = [], compact = false }) => {
           min: 0,
           max: 5,
         },
-        x: {
-          title: false,
-        },
+        x: buildTrendXAxis(pointCount),
       },
       scale: {
         y: { domain: [0, 5] },
@@ -74,7 +85,7 @@ const OverallTrendChart = ({ data = [], compact = false }) => {
             ]
           : [],
     }),
-    [chartData, compact],
+    [chartData, compact, layout.height, layout.paddingBottom, pointCount],
   );
 
   if (!chartData.length) {
@@ -85,7 +96,20 @@ const OverallTrendChart = ({ data = [], compact = false }) => {
     );
   }
 
-  return <Line {...config} />;
+  return (
+    <TrendChartScroll pointCount={pointCount} compact={compact}>
+      {({ width }) => (
+        <>
+          <Line {...config} width={width} />
+          {layout.dense ? (
+            <div className="trends-chart-wrap__hint">
+              Kéo ngang để xem đầy đủ các mốc thời gian.
+            </div>
+          ) : null}
+        </>
+      )}
+    </TrendChartScroll>
+  );
 };
 
 export default OverallTrendChart;

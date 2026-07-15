@@ -1,13 +1,9 @@
 import React, { useMemo } from 'react';
-import { Button } from 'antd';
+import { Button, Typography } from 'antd';
 import { DownloadOutlined, FilterOutlined } from '@ant-design/icons';
+import { getPeriodOption, PERIOD_OPTIONS } from '../constants/periodFilters';
 
-const PERIOD_OPTIONS = [
-  { label: '1 tháng', value: '1m' },
-  { label: '1 quý', value: '1q' },
-  { label: '6 tháng', value: '6m' },
-  { label: '1 năm', value: '1y' },
-];
+const { Text } = Typography;
 
 const TrendsFilterBar = ({
   periodFilter,
@@ -15,12 +11,10 @@ const TrendsFilterBar = ({
   onDownload,
   downloading = false,
   downloadDisabled = false,
+  snapshotCount = 0,
   compact = false,
 }) => {
-  const activeSummary = useMemo(() => {
-    const periodLabel = PERIOD_OPTIONS.find((item) => item.value === periodFilter)?.label;
-    return periodLabel ? [periodLabel] : [];
-  }, [periodFilter]);
+  const activePeriod = useMemo(() => getPeriodOption(periodFilter), [periodFilter]);
 
   return (
     <section className={`trends-filter${compact ? ' trends-filter--mobile' : ''}`}>
@@ -32,11 +26,10 @@ const TrendsFilterBar = ({
           <div>
             <div className="trends-filter__title">Bộ lọc báo cáo</div>
             <div className="trends-filter__summary">
-              {activeSummary.map((item) => (
-                <span key={item} className="trends-filter__chip">
-                  {item}
-                </span>
-              ))}
+              <span className="trends-filter__chip">{activePeriod.label}</span>
+              <span className="trends-filter__chip trends-filter__chip--muted">
+                {snapshotCount} mốc theo {activePeriod.unitLabel}
+              </span>
             </div>
           </div>
         </div>
@@ -58,6 +51,10 @@ const TrendsFilterBar = ({
       <div className="trends-filter__body trends-filter__body--period-only">
         <div className="trends-filter__group trends-filter__group--period">
           <div className="trends-filter__label">Mốc thời gian</div>
+          <Text className="trends-filter__help">
+            Chọn đơn vị gom snapshot trên biểu đồ. Dữ liệu gốc vẫn được chụp hàng tháng; mỗi mốc lấy
+            snapshot tháng cuối cùng trong kỳ.
+          </Text>
           <div className="trends-filter__period-grid">
             {PERIOD_OPTIONS.map((option) => (
               <button
@@ -68,7 +65,8 @@ const TrendsFilterBar = ({
                 }`}
                 onClick={() => onPeriodChange(option.value)}
               >
-                {option.label}
+                <span className="trends-filter__period-btn-label">{option.label}</span>
+                <span className="trends-filter__period-btn-hint">{option.hint}</span>
               </button>
             ))}
           </div>

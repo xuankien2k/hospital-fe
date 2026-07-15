@@ -2,6 +2,7 @@ import React from 'react';
 import { Alert, Card, Col, Row, Spin, Typography } from 'antd';
 import { InfoCircleOutlined, LineChartOutlined } from '@ant-design/icons';
 import TrendsFilterBar from '../TrendsFilterBar';
+import TrendsDemoNotice from '../TrendsDemoNotice';
 import OverallTrendChart from '../OverallTrendChart';
 import PartTrendChart from '../PartTrendChart';
 import DepartmentTrendChart from '../DepartmentTrendChart';
@@ -60,6 +61,8 @@ const TrendsMobileView = ({
       </div>
 
       <TrendsFilterBar {...filterBarProps} compact />
+
+      <TrendsDemoNotice demoMode={trend?.demoMode} />
 
       {!trend?.hasEnoughData ? (
         <Alert

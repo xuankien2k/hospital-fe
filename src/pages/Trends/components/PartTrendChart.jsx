@@ -2,6 +2,13 @@ import React, { useMemo } from 'react';
 import { Line } from '@ant-design/plots';
 import { BRAND_COLOR } from '../../../utils/brandColors';
 import { getPartDisplayLabel } from '@/utils/reportParts';
+import TrendChartScroll from './TrendChartScroll';
+import {
+  buildTrendLineStyle,
+  buildTrendXAxis,
+  countUniqueLabels,
+  getTrendChartLayout,
+} from '../utils/trendsChartHelpers';
 
 const PART_COLORS = [BRAND_COLOR, '#16a34a', '#ca8a04', '#E61515', '#7c3aed'];
 
@@ -14,6 +21,22 @@ const parseTooltipScore = (item) => {
 };
 
 const formatPartTooltipValue = (datum) => `${datum.avgScore.toFixed(2)} · ${datum.count} TC`;
+
+const PartTrendLegend = ({ parts = [] }) => (
+  <div className="trends-part-chart__legend" aria-label="Chú thích nhóm tiêu chí">
+    {parts.map((part, index) => (
+      <span key={part} className="trends-part-chart__legend-item">
+        <span
+          className="trends-part-chart__legend-line"
+          style={{
+            background: PART_COLORS[index % PART_COLORS.length],
+          }}
+        />
+        <span className="trends-part-chart__legend-label">{part}</span>
+      </span>
+    ))}
+  </div>
+);
 
 const PartTrendChart = ({ byPartTrend = {}, compact = false }) => {
   const chartData = useMemo(() => {
@@ -32,6 +55,8 @@ const PartTrendChart = ({ byPartTrend = {}, compact = false }) => {
   }, [byPartTrend]);
 
   const parts = useMemo(() => [...new Set(chartData.map((item) => item.part))], [chartData]);
+  const pointCount = useMemo(() => countUniqueLabels(chartData, 'label'), [chartData]);
+  const layout = useMemo(() => getTrendChartLayout(pointCount, compact), [pointCount, compact]);
 
   const config = useMemo(
     () => ({
@@ -39,8 +64,10 @@ const PartTrendChart = ({ byPartTrend = {}, compact = false }) => {
       xField: 'label',
       yField: 'avgScore',
       colorField: 'part',
-      height: compact ? 260 : 320,
+      height: layout.height,
+      paddingBottom: layout.paddingBottom,
       smooth: true,
+      style: buildTrendLineStyle(),
       scale: {
         y: { domain: [0, 5] },
         color: {
@@ -54,13 +81,9 @@ const PartTrendChart = ({ byPartTrend = {}, compact = false }) => {
           min: 0,
           max: 5,
         },
-        x: {
-          title: false,
-        },
+        x: buildTrendXAxis(pointCount),
       },
-      legend: {
-        position: compact ? 'bottom' : 'top',
-      },
+      legend: false,
       interaction: {
         tooltip: {
           shared: true,
@@ -107,14 +130,30 @@ const PartTrendChart = ({ byPartTrend = {}, compact = false }) => {
         ],
       },
     }),
-    [chartData, parts, compact],
+    [chartData, parts, layout.height, layout.paddingBottom, pointCount],
   );
 
   if (!chartData.length) {
     return <div className="trends-empty-chart">Chưa có dữ liệu theo nhóm tiêu chí</div>;
   }
 
-  return <Line {...config} />;
+  return (
+    <div className="trends-part-chart">
+      <PartTrendLegend parts={parts} />
+      <TrendChartScroll pointCount={pointCount} compact={compact}>
+        {({ width }) => (
+          <>
+            <Line {...config} width={width} />
+            {layout.dense ? (
+              <div className="trends-chart-wrap__hint">
+                Kéo ngang để xem đầy đủ các mốc thời gian.
+              </div>
+            ) : null}
+          </>
+        )}
+      </TrendChartScroll>
+    </div>
+  );
 };
 
 export default PartTrendChart;

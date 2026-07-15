@@ -2,6 +2,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Line } from '@ant-design/plots';
 import { Segmented, Select, Table, Typography } from 'antd';
 import { BRAND_COLOR } from '@/utils/brandColors';
+import TrendChartScroll from './TrendChartScroll';
+import {
+  buildTrendLineStyle,
+  buildTrendXAxis,
+  countUniqueLabels,
+  getTrendChartLayout,
+} from '../utils/trendsChartHelpers';
 
 const MAX_CHART_DEPARTMENTS = 8;
 const MAX_CHART_DEPARTMENTS_COMPACT = 5;
@@ -114,6 +121,9 @@ const DepartmentTrendChart = ({ byDepartmentTrend = [], compact = false }) => {
     return rows;
   }, [visibleDepartments]);
 
+  const pointCount = useMemo(() => countUniqueLabels(chartData, 'label'), [chartData]);
+  const layout = useMemo(() => getTrendChartLayout(pointCount, compact), [pointCount, compact]);
+
   const departments = useMemo(
     () => visibleDepartments.map((item) => item.name),
     [visibleDepartments],
@@ -157,8 +167,10 @@ const DepartmentTrendChart = ({ byDepartmentTrend = [], compact = false }) => {
       xField: 'label',
       yField: 'avgScore',
       colorField: 'department',
-      height: compact ? 260 : Math.min(420, 220 + visibleDepartments.length * 12),
+      height: layout.height,
+      paddingBottom: layout.paddingBottom,
       smooth: true,
+      style: buildTrendLineStyle(),
       scale: {
         y: { domain: [0, 5] },
         color: {
@@ -172,9 +184,7 @@ const DepartmentTrendChart = ({ byDepartmentTrend = [], compact = false }) => {
           min: 0,
           max: 5,
         },
-        x: {
-          title: false,
-        },
+        x: buildTrendXAxis(pointCount),
       },
       legend: false,
       interaction: {
@@ -223,7 +233,16 @@ const DepartmentTrendChart = ({ byDepartmentTrend = [], compact = false }) => {
         ],
       },
     }),
-    [chartData, departments, departmentColorMap, compact, visibleDepartments.length],
+    [
+      chartData,
+      departments,
+      departmentColorMap,
+      compact,
+      layout.height,
+      layout.paddingBottom,
+      pointCount,
+      visibleDepartments.length,
+    ],
   );
 
   const handleSelectAllDepartments = () => {
@@ -296,7 +315,20 @@ const DepartmentTrendChart = ({ byDepartmentTrend = [], compact = false }) => {
         ))}
       </div>
 
-      {chartData.length ? <Line {...config} /> : null}
+      {chartData.length ? (
+        <TrendChartScroll pointCount={pointCount} compact={compact}>
+          {({ width }) => (
+            <>
+              <Line {...config} width={width} />
+              {layout.dense ? (
+                <div className="trends-chart-wrap__hint">
+                  Kéo ngang để xem đầy đủ các mốc thời gian.
+                </div>
+              ) : null}
+            </>
+          )}
+        </TrendChartScroll>
+      ) : null}
 
       <div className="trends-dept-chart__ranking">
         <div className="trends-dept-chart__ranking-title">
