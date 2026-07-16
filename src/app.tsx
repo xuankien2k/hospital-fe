@@ -25,6 +25,17 @@ const renderMenuItem = (menuItemProps, defaultDom) => {
     );
   }
 
+  if (menuItemProps.path === '/TrendsDemo' && React.isValidElement(defaultDom)) {
+    content = React.cloneElement(
+      defaultDom,
+      {},
+      <>
+        {defaultDom.props.children}
+        <span className="app-menu-demo-badge">Demo</span>
+      </>,
+    );
+  }
+
   if (menuItemProps.isUrl || menuItemProps.children) {
     return content;
   }

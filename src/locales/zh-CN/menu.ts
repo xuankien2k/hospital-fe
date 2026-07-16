@@ -53,4 +53,5 @@ export default {
   'menu.categories': 'Quản lý tiêu chí',
   'menu.report': 'Báo cáo',
   'menu.trends': 'Xu hướng',
+  'menu.trendsDemo': 'Xu hướng demo',
 };

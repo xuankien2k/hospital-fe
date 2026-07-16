@@ -53,4 +53,5 @@ export default {
   'menu.categories': 'Criteria management',
   'menu.report': 'Report',
   'menu.trends': 'Trends',
+  'menu.trendsDemo': 'Trends Demo',
 };

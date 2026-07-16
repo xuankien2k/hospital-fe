@@ -130,14 +130,15 @@ export function buildTrendSnapshotCsv(trend, periodFilter = '1m') {
   return `\uFEFF${rows.map(toCsvLine).join('\n')}`;
 }
 
-export function downloadTrendSnapshot(trend, periodFilter = '1m') {
+export function downloadTrendSnapshot(trend, periodFilter = '1m', { useDemo = false } = {}) {
   const csv = buildTrendSnapshotCsv(trend, periodFilter);
   if (!csv) {
     return false;
   }
 
   const periodSlug = PERIOD_LABELS[periodFilter] || periodFilter;
-  const filename = `Xu-huong-snapshot-${periodSlug}-${dayjs().format('YYYYMMDD-HHmm')}.csv`;
+  const demoSuffix = useDemo ? '-demo' : '';
+  const filename = `Xu-huong-snapshot${demoSuffix}-${periodSlug}-${dayjs().format('YYYYMMDD-HHmm')}.csv`;
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement('a');

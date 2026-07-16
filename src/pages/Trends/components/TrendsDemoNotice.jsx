@@ -12,7 +12,7 @@ const TrendsDemoNotice = ({ demoMode = false }) => {
       type="warning"
       showIcon
       message="Đang hiển thị dữ liệu snapshot DEMO"
-      description="Dữ liệu production vẫn được giữ nguyên. Tắt TRENDS_DEMO_MODE trên server để quay lại snapshot thật."
+      description="Dữ liệu mẫu để trình diễn biểu đồ. Tab Xu hướng chính vẫn dùng snapshot production."
     />
   );
 };

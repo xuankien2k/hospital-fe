@@ -45,6 +45,9 @@ const TrendsMobileView = ({
   periodLabels,
   scoreDelta,
   filterBarProps,
+  useDemo = false,
+  pageTitle = 'Báo cáo xu hướng',
+  pageSubtitle = 'Theo dõi điểm chất lượng theo snapshot hàng tháng.',
 }) => {
   const latestPoint = overallTrend[overallTrend.length - 1];
 
@@ -53,16 +56,14 @@ const TrendsMobileView = ({
       <div className="trends-page__header">
         <Title level={4} className="trends-page__title">
           <LineChartOutlined style={{ marginRight: 8, color: '#3A4AFF' }} />
-          Báo cáo xu hướng
+          {pageTitle}
         </Title>
-        <Text className="trends-page__subtitle">
-          Theo dõi điểm chất lượng theo snapshot hàng tháng.
-        </Text>
+        <Text className="trends-page__subtitle">{pageSubtitle}</Text>
       </div>
 
       <TrendsFilterBar {...filterBarProps} compact />
 
-      <TrendsDemoNotice demoMode={trend?.demoMode} />
+      <TrendsDemoNotice demoMode={useDemo} />
 
       {!trend?.hasEnoughData ? (
         <Alert

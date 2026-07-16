@@ -48,6 +48,12 @@ export default [
     component: './Trends/Trends',
   },
   {
+    path: '/TrendsDemo',
+    name: 'trendsDemo',
+    icon: 'experiment',
+    component: './Trends/TrendsDemo',
+  },
+  {
     path: '/admin',
     name: 'admin',
     icon: 'crown',

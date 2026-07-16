@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { path: '/Category', label: 'Tiêu chí', icon: SolutionOutlined },
   { path: '/Report', label: 'Báo cáo', icon: DashboardOutlined },
   { path: '/Trends', label: 'Xu hướng', icon: LineChartOutlined, beta: true },
+  { path: '/TrendsDemo', label: 'X.Hướng demo', icon: LineChartOutlined, demo: true },
   {
     path: '/user-list',
     label: 'Người dùng',
@@ -62,6 +63,9 @@ const MobileNavBar = () => {
                 <span>{item.label}</span>
                 {item.beta ? (
                   <span className="app-menu-beta-badge app-menu-beta-badge--mobile">Beta</span>
+                ) : null}
+                {item.demo ? (
+                  <span className="app-menu-demo-badge app-menu-demo-badge--mobile">Demo</span>
                 ) : null}
               </span>
             </button>
