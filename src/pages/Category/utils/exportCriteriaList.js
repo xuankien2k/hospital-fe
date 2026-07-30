@@ -74,6 +74,42 @@ const buildChapterHeader = (chapter, count) => {
   return [chapter, withCountSuffix(base, count), '', '', '', '', ''];
 };
 
+const normalizeChapterKey = (chapter, code) => {
+  const ch = String(chapter || '').trim();
+  const c = String(code || '').trim();
+  const fromChapter = ch.match(/^([A-E]\d+)/i);
+  if (fromChapter) return fromChapter[1].toUpperCase();
+  const fromCode = c.match(/^([A-E]\d+)/i);
+  if (fromCode) return fromCode[1].toUpperCase();
+  return ch;
+};
+
+/** Cùng quy tắc getChapterCoefficient ở BE — C3/C5 nhân hệ số 2. */
+const getChapterCoefficient = (chapter, code) => {
+  const chapterKey = normalizeChapterKey(chapter, code);
+  if (!chapterKey) return 1;
+  if (chapterKey === 'C3' || chapterKey === 'C5') return 2;
+  return 1;
+};
+
+const buildWeightedTotals = (sorted = []) => {
+  let totalCurrent = 0;
+  let totalExpected = 0;
+  let weightUnits = 0;
+
+  sorted.forEach((item) => {
+    const coefficient = getChapterCoefficient(item.chapter, item.code);
+    const currentLevel = getCriteriaCurrentLevel(item) || 0;
+    const expectedLevel = Number(item.expectedLevel) || 0;
+
+    totalCurrent += currentLevel * coefficient;
+    totalExpected += expectedLevel * coefficient;
+    weightUnits += coefficient;
+  });
+
+  return { totalCurrent, totalExpected, weightUnits };
+};
+
 const buildCriteriaRow = (record) => {
   const currentLevel = getCriteriaCurrentLevel(record);
 
@@ -135,17 +171,15 @@ export function buildCriteriaExportRows(criteriaList = []) {
     rows.push(buildCriteriaRow(item));
   });
 
-  const totalCurrent = sorted.reduce((sum, item) => sum + (getCriteriaCurrentLevel(item) || 0), 0);
-  const totalExpected = sorted.reduce((sum, item) => sum + (Number(item.expectedLevel) || 0), 0);
-  const count = sorted.length;
+  const { totalCurrent, totalExpected, weightUnits } = buildWeightedTotals(sorted);
 
   rows.push(['', '', '', String(totalCurrent), String(totalExpected), '', '']);
   rows.push([
     '',
     '',
     '',
-    String(Number((totalCurrent / count).toFixed(10))),
-    String(Number((totalExpected / count).toFixed(10))),
+    weightUnits ? String(totalCurrent / weightUnits) : '0',
+    weightUnits ? String(totalExpected / weightUnits) : '0',
     '',
     '',
   ]);
