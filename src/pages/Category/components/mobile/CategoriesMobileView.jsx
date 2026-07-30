@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { FilterOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import { FilterOutlined, PlusOutlined, SearchOutlined, DownloadOutlined } from '@ant-design/icons';
 import { Badge, Button, Input, List, Select } from 'antd';
 import CriteriaEvaluationGuide from '../../../../components/CriteriaEvaluationGuide';
 import CriteriaCard from './CriteriaCard';
@@ -31,6 +31,8 @@ const CategoriesMobileView = ({
   onUpdate,
   onDelete,
   onToggleStatus,
+  onDownload,
+  downloadingCriteria = false,
 }) => {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -114,11 +116,18 @@ const CategoriesMobileView = ({
               onClick={() => setFiltersOpen((open) => !open)}
               type={filtersOpen || hasActiveFilters ? 'primary' : 'default'}
               ghost={hasActiveFilters && !filtersOpen}
-              className={canCreateCriteria ? undefined : 'mobile-page-toolbar__action-main'}
             >
               Lọc
             </Button>
           </Badge>
+          <Button
+            size="large"
+            icon={<DownloadOutlined />}
+            loading={downloadingCriteria}
+            onClick={onDownload}
+          >
+            Tải file
+          </Button>
         </div>
 
         {filtersOpen ? (

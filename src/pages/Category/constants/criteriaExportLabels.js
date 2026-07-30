@@ -1,0 +1,30 @@
+export const PART_EXPORT_LABELS = {
+  A: 'PHẦN A. HƯỚNG ĐẾN NGƯỜI BỆNH',
+  B: 'PHẦN B. PHÁT TRIỂN NGUỒN NHÂN LỰC BỆNH VIỆN',
+  C: 'PHẦN C. HOẠT ĐỘNG CHUYÊN MÔN',
+  D: 'PHẦN D. HOẠT ĐỘNG CẢI TIẾN CHẤT LƯỢNG',
+  E: 'PHẦN E. TIÊU CHÍ ĐẶC THÙ CHUYÊN KHOA',
+};
+
+export const CHAPTER_EXPORT_LABELS = {
+  A1: 'A1. Chỉ dẫn, đón tiếp, hướng dẫn, cấp cứu người bệnh',
+  A2: 'A2. Điều kiện cơ sở vật chất phục vụ người bệnh',
+  A4: 'A4. Quyền và lợi ích của người bệnh',
+  B1: 'B1. Số lượng và cơ cấu nhân lực bệnh viện',
+  B2: 'B2. Chất lượng nguồn nhân lực',
+  B3: 'B3. Chế độ đãi ngộ và điều kiện, môi trường làm việc',
+  B4: 'B4. Lãnh đạo bệnh viện',
+  C1: 'C1. An ninh, trật tự và an toàn cháy nổ',
+  C2: 'C2. Quản lý hồ sơ bệnh án',
+  C3: 'C3. Ứng dụng công nghệ thông tin (điểm x2)',
+  C5: 'C5. Năng lực thực hiện kỹ thuật chuyên môn (điểm x2)',
+  C6: 'C6. Hoạt động điều dưỡng và chăm sóc người bệnh',
+  C7: 'C7. Năng lực thực hiện chăm sóc dinh dưỡng và tiết chế',
+  C8: 'C8. Chất lượng xét nghiệm',
+  C9: 'C9. Quản lý cung ứng và sử dụng thuốc',
+  C10: 'C10. Nghiên cứu khoa học',
+  D1: 'D1. Thiết lập hệ thống và cải tiến chất lượng',
+  D2: 'D2. Phòng ngừa các sự cố khắc phục',
+  D3: 'D3. Đánh giá, đo lường, hợp tác và cải tiến chất lượng',
+  E1: 'E1. Tiêu chí sản khoa, nhi khoa (áp dụng cho bệnh viện đa khoa có khoa Sản, Nhi và bệnh viện chuyên khoa Sản, Nhi)',
+};

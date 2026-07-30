@@ -27,6 +27,7 @@ import {
   ExclamationCircleOutlined,
   CheckCircleOutlined,
   StopOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 import axiosInstance from '../../utils/axiosInstance';
 import { getApiErrorMessage } from '../../utils/apiError';
@@ -48,6 +49,7 @@ import { BRAND_COLOR } from '../../utils/brandColors';
 import CriteriaEvaluationGuide from '../../components/CriteriaEvaluationGuide';
 import { useCompactBreakpoint } from '../../hooks/useCompactBreakpoint';
 import CategoriesMobileView from './components/mobile/CategoriesMobileView';
+import { downloadCriteriaList } from './utils/exportCriteriaList';
 import '../../styles/mobile-pages.less';
 import { getCurrentUser as getStoredUser } from '../../utils/authStorage';
 import { isEmpty, map } from 'lodash';
@@ -326,6 +328,7 @@ const Categories = () => {
   const [evidenceTarget, setEvidenceTarget] = useState({ level: null, index: null });
   const [departments, setDepartments] = useState([]);
   const [departmentFilter, setDepartmentFilter] = useState(undefined);
+  const [downloadingCriteria, setDownloadingCriteria] = useState(false);
 
   const criteriaDepartmentOptions = useMemo(
     () => getCriteriaDepartmentOptions(departments),
@@ -401,6 +404,38 @@ const Categories = () => {
 
   // Event handlers
   const handleSearch = () => list();
+
+  const handleDownloadCriteria = async () => {
+    try {
+      setDownloadingCriteria(true);
+      const response = await axiosInstance.post('/api/criteria/list', {
+        page: 1,
+        limit: 500,
+        keyword: searchText,
+        out_of_date: dateFilter.value,
+        ...(departmentFilter ? { departmentId: departmentFilter } : {}),
+      });
+
+      let items = response.data?.data || [];
+      if (selectedLevel !== 'all') {
+        items = items.filter((item) => item.currentLevel === parseInt(selectedLevel, 10));
+      }
+
+      if (!items.length) {
+        message.warning('Không có tiêu chí để tải về');
+        return;
+      }
+
+      const downloaded = downloadCriteriaList(items);
+      if (downloaded) {
+        message.success('Đã tải file tiêu chí');
+      }
+    } catch (err) {
+      message.error(getApiErrorMessage(err, 'Không tải được file tiêu chí'));
+    } finally {
+      setDownloadingCriteria(false);
+    }
+  };
 
   const showModal = (record = null) => {
     setModalVisible(true);
@@ -1165,6 +1200,14 @@ const Categories = () => {
         <Button size="large" type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
           Tìm kiếm
         </Button>
+        <Button
+          size="large"
+          icon={<DownloadOutlined />}
+          loading={downloadingCriteria}
+          onClick={handleDownloadCriteria}
+        >
+          Tải file tiêu chí
+        </Button>
         {canCreateCriteria && (
           <Button
             size="large"
@@ -1304,6 +1347,8 @@ const Categories = () => {
           onUpdate={showOfficerUpdateModal}
           onDelete={showConfirm}
           onToggleStatus={handleToggleCriteriaStatus}
+          onDownload={handleDownloadCriteria}
+          downloadingCriteria={downloadingCriteria}
         />
       )}
       {criteriaModals}
