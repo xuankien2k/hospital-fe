@@ -392,7 +392,7 @@ const Report = () => {
     {
       label: 'Điểm trung bình',
       value: summary?.overallScore?.toFixed(2) || '0.00',
-      tooltip: 'Điểm trung bình chung các tiêu chí được áp dụng đánh giá.',
+      tooltip: `Điểm trung bình = tổng điểm (${summary?.totalWeightedScore || 0}) ÷ tổng hệ số (${summary?.totalWeight || 0}). Tiêu chí C3/C5 được nhân hệ số 2.`,
       highlight: true,
       ...SUMMARY_STAT_THEME,
     },
