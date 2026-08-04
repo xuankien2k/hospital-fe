@@ -329,6 +329,7 @@ const Categories = () => {
   const [departments, setDepartments] = useState([]);
   const [departmentFilter, setDepartmentFilter] = useState(undefined);
   const [downloadingCriteria, setDownloadingCriteria] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const criteriaDepartmentOptions = useMemo(
     () => getCriteriaDepartmentOptions(departments),
@@ -368,6 +369,7 @@ const Categories = () => {
       ...(departmentFilter ? { departmentId: departmentFilter } : {}),
     };
 
+    setLoading(true);
     axiosInstance
       .post('/api/criteria/list', params)
       .then((response) => {
@@ -380,7 +382,8 @@ const Categories = () => {
         }
         setData(filteredData);
       })
-      .catch((err) => setError(err.message));
+      .catch((err) => message.error(getApiErrorMessage(err, 'Không tải được danh sách tiêu chí')))
+      .finally(() => setLoading(false));
   };
 
   const listUser = () => {
@@ -392,7 +395,7 @@ const Categories = () => {
     axiosInstance
       .post('/api/users/list', params)
       .then((response) => setListUsers(response.data.data))
-      .catch((err) => setError(err.message));
+      .catch(() => setListUsers([]));
   };
 
   const fetchDepartments = () => {
@@ -1268,6 +1271,7 @@ const Categories = () => {
         rowKey="_id"
         search={false}
         pagination={{ pageSize: 100 }}
+        loading={loading}
         rowClassName={(record) => {
           if (record.isPartHeader) return 'criteria-part-header-row';
           if (record.isChapterHeader) return 'criteria-chapter-header-row';
@@ -1325,6 +1329,7 @@ const Categories = () => {
       ) : (
         <CategoriesMobileView
           tableData={tableData}
+          loading={loading}
           searchText={searchText}
           onSearchTextChange={setSearchText}
           onSearch={handleSearch}

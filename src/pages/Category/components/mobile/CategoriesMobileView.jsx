@@ -9,6 +9,7 @@ const { Option } = Select;
 
 const CategoriesMobileView = ({
   tableData,
+  loading = false,
   searchText,
   onSearchTextChange,
   onSearch,
@@ -182,7 +183,9 @@ const CategoriesMobileView = ({
       </div>
 
       <List
+        loading={loading}
         dataSource={mobileListItems}
+        locale={{ emptyText: loading ? ' ' : 'Không có tiêu chí' }}
         renderItem={(record) => {
           if (record.isStickyGroupHeader) {
             return (
