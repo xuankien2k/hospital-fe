@@ -252,6 +252,8 @@ const defaultLevel = [
   { levelNumber: 5, subCriterias: [] },
 ];
 
+const CRITERIA_LIST_PAGE_SIZE = 150;
+
 const outOfDateFilter = [
   {
     code: 'All',
@@ -311,7 +313,6 @@ const Categories = () => {
   // State declarations
   const [searchText, setSearchText] = useState('');
   const [data, setData] = useState([]);
-  const [originalData, setOriginalData] = useState([]); // Store original unfiltered data
   const [modalVisible, setModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [levels, setLevels] = useState(defaultLevel);
@@ -330,6 +331,8 @@ const Categories = () => {
   const [departmentFilter, setDepartmentFilter] = useState(undefined);
   const [downloadingCriteria, setDownloadingCriteria] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [listPage, setListPage] = useState(1);
+  const [listTotal, setListTotal] = useState(0);
 
   const criteriaDepartmentOptions = useMemo(
     () => getCriteriaDepartmentOptions(departments),
@@ -350,37 +353,33 @@ const Categories = () => {
 
   // Effects
   useEffect(() => {
-    list();
     listUser();
     fetchDepartments();
   }, []);
 
   useEffect(() => {
-    list();
-  }, [dateFilter, departmentFilter]);
+    list(1);
+  }, [dateFilter, departmentFilter, selectedLevel]);
 
   // API calls
-  const list = () => {
+  const list = (page = 1) => {
     const params = {
-      page: 1,
-      limit: 100,
+      page,
+      limit: CRITERIA_LIST_PAGE_SIZE,
       keyword: searchText,
       out_of_date: dateFilter.value,
       ...(departmentFilter ? { departmentId: departmentFilter } : {}),
+      ...(selectedLevel !== 'all' ? { currentLevel: parseInt(selectedLevel, 10) } : {}),
     };
 
     setLoading(true);
     axiosInstance
       .post('/api/criteria/list', params)
       .then((response) => {
-        setOriginalData(response.data.data); // Store original data
-        let filteredData = response.data.data;
-        if (selectedLevel !== 'all') {
-          filteredData = filteredData.filter(
-            (item) => item.currentLevel === parseInt(selectedLevel),
-          );
-        }
-        setData(filteredData);
+        const items = response.data.data || [];
+        setData(items);
+        setListTotal(response.data.total ?? items.length);
+        setListPage(response.data.page ?? page);
       })
       .catch((err) => message.error(getApiErrorMessage(err, 'Không tải được danh sách tiêu chí')))
       .finally(() => setLoading(false));
@@ -406,7 +405,7 @@ const Categories = () => {
   };
 
   // Event handlers
-  const handleSearch = () => list();
+  const handleSearch = () => list(1);
 
   const handleDownloadCriteria = async () => {
     try {
@@ -417,12 +416,10 @@ const Categories = () => {
         keyword: searchText,
         out_of_date: dateFilter.value,
         ...(departmentFilter ? { departmentId: departmentFilter } : {}),
+        ...(selectedLevel !== 'all' ? { currentLevel: parseInt(selectedLevel, 10) } : {}),
       });
 
-      let items = response.data?.data || [];
-      if (selectedLevel !== 'all') {
-        items = items.filter((item) => item.currentLevel === parseInt(selectedLevel, 10));
-      }
+      const items = response.data?.data || [];
 
       if (!items.length) {
         message.warning('Không có tiêu chí để tải về');
@@ -664,12 +661,6 @@ const Categories = () => {
 
   const handleChangeLevelFilter = (value) => {
     setSelectedLevel(value);
-    if (value === 'all') {
-      setData(originalData);
-    } else {
-      const filteredData = originalData.filter((item) => item.currentLevel === parseInt(value));
-      setData(filteredData);
-    }
   };
 
   const rowStrikeStyle = (inactive) =>
@@ -1270,7 +1261,13 @@ const Categories = () => {
         dataSource={tableData}
         rowKey="_id"
         search={false}
-        pagination={{ pageSize: 100 }}
+        pagination={{
+          current: listPage,
+          pageSize: CRITERIA_LIST_PAGE_SIZE,
+          total: listTotal,
+          showSizeChanger: false,
+          onChange: (page) => list(page),
+        }}
         loading={loading}
         rowClassName={(record) => {
           if (record.isPartHeader) return 'criteria-part-header-row';

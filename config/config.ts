@@ -1,5 +1,6 @@
 // https://umijs.org/config/
 import { defineConfig } from '@umijs/max';
+import viVN from 'antd/locale/vi_VN';
 import { join } from 'path';
 import defaultSettings from './defaultSettings';
 import proxy from './proxy';
@@ -105,11 +106,9 @@ export default defineConfig({
    * @doc https://umijs.org/docs/max/i18n
    */
   locale: {
-    // default zh-CN
-    default: 'zh-CN',
+    default: 'vi-VN',
     antd: true,
-    // default true, when it is true, will use `navigator.language` overwrite default
-    baseNavigator: true,
+    baseNavigator: false,
   },
   /**
    * @name antd 插件
@@ -118,6 +117,7 @@ export default defineConfig({
    */
   antd: {
     configProvider: {
+      locale: viVN,
       theme: {
         token: {
           colorPrimary: '#3A4AFF',

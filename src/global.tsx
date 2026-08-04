@@ -1,8 +1,11 @@
 import { useIntl } from '@umijs/max';
 import { Button, message, notification } from 'antd';
+import dayjs from 'dayjs';
+import 'dayjs/locale/vi';
 import defaultSettings from '../config/defaultSettings';
 import { configureMessageDefaults } from './utils/configureMessage';
 
+dayjs.locale('vi');
 configureMessageDefaults();
 
 const { pwa } = defaultSettings;
