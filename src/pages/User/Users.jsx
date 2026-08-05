@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { PageContainer, ProTable } from '@ant-design/pro-components';
 import { useModel } from '@umijs/max';
 import { Input, Button, Modal, Form, Upload, Select, Dropdown, Menu, message } from 'antd';
+import dayjs from 'dayjs';
 import {
   PlusOutlined,
   SearchOutlined,
@@ -186,6 +187,13 @@ const Users = () => {
         };
         return labels[role] || role;
       },
+    },
+    {
+      title: 'Ngày tham gia',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      width: 130,
+      render: (date) => (date ? dayjs(date).format('DD/MM/YYYY') : '—'),
     },
     canManageUsers && {
       title: 'Hành động',
