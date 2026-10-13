@@ -2,18 +2,28 @@ import axios from 'axios';
 import { getAuthToken } from './authStorage';
 import { getApiErrorMessage } from './apiError';
 
-const PRODUCTION_API_URL = 'https://bacninh-hospital.com';
 const LOCAL_API_URL = 'http://localhost:3005';
+const DEFAULT_CLOUD_API_URL = 'https://api.bacninh-hospital.com';
 
 function resolveApiBaseUrl() {
+  const fromEnv = process.env.UMI_APP_API_BASE;
+  if (fromEnv && String(fromEnv).trim()) {
+    return String(fromEnv).trim().replace(/\/$/, '');
+  }
+
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
     if (host === 'localhost' || host === '127.0.0.1') {
       return LOCAL_API_URL;
     }
+
+    // EC2/nginx cùng domain: API qua /api trên origin hiện tại
+    if (process.env.NODE_ENV === 'production') {
+      return window.location.origin;
+    }
   }
 
-  return process.env.NODE_ENV === 'production' ? PRODUCTION_API_URL : LOCAL_API_URL;
+  return process.env.NODE_ENV === 'production' ? DEFAULT_CLOUD_API_URL : LOCAL_API_URL;
 }
 
 const axiosInstance = axios.create({

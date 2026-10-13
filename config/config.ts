@@ -6,7 +6,7 @@ import defaultSettings from './defaultSettings';
 import proxy from './proxy';
 import routes from './routes';
 
-const { REACT_APP_ENV = 'dev' } = process.env;
+const { REACT_APP_ENV = 'dev', UMI_APP_API_BASE = '' } = process.env;
 
 /**
  * @name 使用公共路径
@@ -24,6 +24,11 @@ export default defineConfig({
   hash: true,
 
   publicPath: PUBLIC_PATH,
+
+  /** API Railway — set UMI_APP_API_BASE on Vercel at build time */
+  define: {
+    'process.env.UMI_APP_API_BASE': UMI_APP_API_BASE,
+  },
 
   /**
    * @name 兼容性设置
